@@ -47,23 +47,23 @@ This checklist is based on the `spec.md` document and outlines the tasks require
 *Goal: Introduce a player entity that can move around the world using keyboard/mouse, affected by gravity and basic collision with the ground/blocks.*
 
 -   **Player & Controls Setup:**
-    -   [ ] Create `Player.js`.
-    -   [ ] Implement `Player` class to store position, velocity, and state (e.g., `isGrounded`).
-    -   [ ] Add the main `THREE.PerspectiveCamera` as a child of a `THREE.Object3D` representing the player in `Player.js`. Position camera appropriately.
-    -   [ ] Create `Controls.js`.
-    -   [ ] Initialize `THREE.PointerLockControls` in `Controls.js`, linking it to the player object/camera.
-    -   [ ] Add event listeners for mouse clicks to activate pointer lock.
-    -   [ ] Implement keyboard event listeners (`keydown`, `keyup`) in `Controls.js` for WASD movement intentions.
+    -   [x] Create `Player.js`.
+    -   [x] Implement `Player` class to store position, velocity, and state (e.g., `isGrounded`).
+    -   [x] Add the main `THREE.PerspectiveCamera` as a child of a `THREE.Object3D` representing the player in `Player.js`. Position camera appropriately.
+    -   [x] Create `Controls.js`.
+    -   [x] Initialize `THREE.PointerLockControls` in `Controls.js`, linking it to the player object/camera.
+    -   [x] Add event listeners for mouse clicks to activate pointer lock.
+    -   [x] Implement keyboard event listeners (`keydown`, `keyup`) in `Controls.js` for WASD movement intentions.
 -   **Movement Logic:**
-    -   [ ] In the game loop (`main.js` or `Player.js`), update player velocity based on keyboard input (`Controls.js` state) and camera direction (`PointerLockControls`).
-    -   [ ] Update player position based on velocity and delta time.
+    -   [x] In the game loop (`main.js` or `Player.js`), update player velocity based on keyboard input (`Controls.js` state) and camera direction (`PointerLockControls`).
+    -   [x] Update player position based on velocity and delta time.
 -   **Physics & Collision (Basic):**
-    -   [ ] Define player AABB dimensions in `Player.js`.
-    -   [ ] Implement simple gravity: Apply downward acceleration to player's Y velocity if `!isGrounded`.
-    -   [ ] Implement basic collision detection function `checkCollision(playerAABB, world)` in `Player.js` or `utils.js`.
-    -   [ ] Check potential next position against solid blocks using `World.getBlock`.
-    -   [ ] Resolve collisions by preventing movement into solid blocks (adjust velocity/position).
-    -   [ ] Update `player.isGrounded` based on collision checks below the player. Reset Y velocity if grounded.
+    -   [x] Define player AABB dimensions in `Player.js`.
+    -   [x] Implement simple gravity: Apply downward acceleration to player's Y velocity if `!isGrounded`.
+    -   [x] Implement basic collision detection function `checkCollision(playerAABB, world)` integrated within `Player.update`.
+    -   [x] Check potential next position against solid blocks using `World.getBlock`.
+    -   [x] Resolve collisions by preventing movement into solid blocks (adjust velocity/position).
+    -   [x] Update `player.isGrounded` based on collision checks below the player. Reset Y velocity if grounded.
 
 ---
 

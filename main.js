@@ -1,8 +1,11 @@
 import * as THREE from 'three';
 import { World } from './src/World.js';
 import { TextureAtlas } from './src/TextureAtlas.js';
+import { Player } from './src/Player.js';
+import { Controls } from './src/Controls.js';
 
 // Basic Three.js setup
+const clock = new THREE.Clock(); // Clock for delta time
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB); // Sky blue background
 
@@ -17,9 +20,11 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8); // Simulate 
 directionalLight.position.set(1, 1, 0.5).normalize();
 scene.add(directionalLight);
 
-// Texture Atlas and World Initialization
+// Texture Atlas, World, Player, Controls Initialization
 const textureAtlas = new TextureAtlas();
-let world; // Declare world variable
+let world;
+let player;
+let controls;
 
 // --- Game Initialization ---
 async function initializeGame() {
@@ -36,9 +41,11 @@ async function initializeGame() {
         scene.add(initialChunk.getMesh()); // Add the chunk's mesh group to the scene
         console.log("Initial chunk added to scene.");
 
-        // Position the camera to view the world
-        camera.position.set(8, 10, 24); // Position above ground level, looking towards origin
-        camera.lookAt(8, 0, 8); // Look towards the center of the initial chunk
+        // Create Player and Controls AFTER world is ready
+        player = new Player(camera, scene);
+        controls = new Controls(player.camera, renderer.domElement); // Pass player's camera
+
+        // Initial camera setup is now handled within Player constructor
 
         // Start the game loop only after initialization is complete
         animate();
@@ -53,8 +60,13 @@ async function initializeGame() {
 function animate() {
     requestAnimationFrame(animate);
 
-    // Update game logic here (e.g., player movement in later milestones)
-    // world.update(camera.position); // Placeholder for dynamic chunk loading
+    const deltaTime = clock.getDelta();
+
+    // Update game logic
+    if (player && world && controls) {
+        player.update(deltaTime, world, controls);
+    }
+    // world.update(player.position); // Placeholder for dynamic chunk loading (Milestone 5)
 
     renderer.render(scene, camera);
 }
