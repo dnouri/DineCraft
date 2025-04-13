@@ -90,39 +90,45 @@ This checklist is based on the `spec.md` document and outlines the tasks require
 
 ---
 
-## Milestone 4: Block Interaction
+## Milestone 4: Block Interaction (Step-by-Step)
 
 *Goal: Allow the player to break existing blocks and place new ones using the mouse.*
 
--   **Interaction Setup:**
-    -   [ ] Initialize `THREE.Raycaster` in `Controls.js` or `Player.js`.
-    -   [ ] Add `Wood` block type to the initial flat world generation for testing.
--   **Block Breaking:**
-    -   [ ] On left mouse click (`mousedown` or `click` within pointer lock):
-        -   [ ] Cast a ray from the camera center using `Raycaster`.
-        -   [ ] Find intersections with chunk meshes within range (~5 blocks).
-        -   [ ] If an intersection occurs, determine the exact world coordinates `(x, y, z)` of the intersected block (requires mapping intersection point and normal back to grid).
-        -   [ ] Call `World.setBlock(x, y, z, 0)` to set the block to Air.
-        -   [ ] Trigger `Chunk.updateMesh()` for the affected chunk (and potentially neighbors if the block was on a boundary).
--   **Block Placing:**
-    -   [ ] Implement hotbar selection:
-        -   [ ] Add keyboard listeners for number keys (1-4) in `Controls.js`.
-        -   [ ] Store the currently selected block ID (1: Grass, 2: Dirt, 3: Stone, 4: Wood) in `Player.js` or `Controls.js`.
-    -   [ ] On right mouse click:
-        -   [ ] Perform raycast as for breaking.
-        -   [ ] If a block face is hit, calculate the coordinates `(nx, ny, nz)` of the adjacent block where the new block should be placed (based on intersected face normal).
-        -   [ ] Get the currently selected block ID from the hotbar state.
-        -   [ ] Check if the placement position `(nx, ny, nz)` is currently Air using `World.getBlock`.
-        -   [ ] Perform a basic check to prevent placing a block where the player is standing (check collision between player AABB and placement block).
-        -   [ ] If checks pass, call `World.setBlock(nx, ny, nz, selectedBlockId)`.
-        -   [ ] Trigger `Chunk.updateMesh()` for the affected chunk(s).
--   **Block Highlighting:**
-    -   [ ] Create a reusable wireframe geometry (e.g., `THREE.BoxGeometry`).
-    -   [ ] Create a `THREE.LineSegments` mesh for the wireframe. Add it to the scene initially, make it invisible.
-    -   [ ] In the game loop:
-        -   [ ] Perform a continuous raycast (every frame or throttled).
-        -   [ ] If a block is intersected within range, make the wireframe visible and set its position to the center of the intersected block.
-        -   [ ] If no block is intersected, make the wireframe invisible.
+1.  **Raycaster Setup & Basic Intersection:**
+    -   [x] Add `THREE.Raycaster` instance to `Player.js`.
+    -   [x] Add `mousedown` listener in `Controls.js`.
+    -   [x] Implement `Player.tryInteract()` triggered by `mousedown`.
+    -   [x] Perform basic raycast from camera center in `tryInteract()`.
+    -   [x] Log intersected objects to console.
+2.  **Identify Intersected Block Coordinates:**
+    -   [ ] Refine raycast to get intersection point & normal.
+    -   [ ] Calculate world coordinates `(x, y, z)` of the hit block.
+    -   [ ] Log block coordinates.
+3.  **Implement Block Breaking:**
+    -   [ ] On left-click (`event.button === 0`), call `world.setBlock(x, y, z, 0)`.
+    -   [ ] Ensure `Chunk.setBlock` sets `needsMeshUpdate = true`.
+    -   [ ] Add loop in `main.js` to check `needsMeshUpdate` and call `chunk.updateMesh()`.
+    -   [ ] Test breaking.
+4.  **Identify Placement Coordinates:**
+    -   [ ] On right-click (`event.button === 2`), calculate adjacent coordinates `(nx, ny, nz)` for placement.
+    -   [ ] Log placement coordinates.
+5.  **Implement Hotbar State:**
+    -   [ ] Add keyboard listeners for keys 1-4 in `Controls.js`.
+    -   [ ] Add `selectedBlockId` property to `Player.js` (default to Stone/Wood).
+    -   [ ] Update `selectedBlockId` on key press.
+6.  **Implement Block Placement:**
+    -   [ ] On right-click, get `selectedBlockId`.
+    -   [ ] Check if placement coords `(nx, ny, nz)` are Air (`world.getBlock`).
+    -   [ ] Check for collision between placement block and player AABB.
+    -   [ ] If checks pass, call `world.setBlock(nx, ny, nz, selectedBlockId)`.
+    -   [ ] Test placement.
+7.  **Implement Block Highlighting:**
+    -   [ ] Create wireframe `LineSegments` mesh in `main.js` (or `Highlight.js`). Add to scene, initially invisible.
+    -   [ ] Perform continuous/throttled raycast in game loop.
+    -   [ ] If block hit within range, position wireframe at block center & make visible.
+    -   [ ] If no block hit, make wireframe invisible.
+8.  **Add Wood to World Gen:**
+    -   [ ] Modify `Chunk.generateTerrain` to add some Wood blocks.
 
 ---
 

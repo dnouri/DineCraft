@@ -1,0 +1,22 @@
+/* Basic reset */
+body {
+    margin: 0;
+    overflow: hidden; /* Prevent scrollbars */
+}
+
+canvas {
+    display: block; /* Prevent scrollbars */
+}
+
+/* Crosshair styling */
+#crosshair {
+    position: fixed; /* Position relative to the viewport */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center the element */
+    font-size: 24px; /* Adjust size as needed */
+    color: white; /* Adjust color as needed */
+    text-shadow: 1px 1px 2px black; /* Optional shadow for visibility */
+    pointer-events: none; /* Allow clicks to pass through to the canvas */
+    z-index: 10; /* Ensure it's above the canvas */
+}

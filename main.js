@@ -24,7 +24,9 @@ scene.add(directionalLight);
 const textureAtlas = new TextureAtlas();
 let world;
 let player;
-let controls;
+let controls; // Declare world globally for now for Controls access (temporary)
+window.world = null;
+
 
 // --- Game Initialization ---
 async function initializeGame() {
@@ -33,17 +35,17 @@ async function initializeGame() {
         console.log("Texture Atlas loaded.");
 
         const chunkMaterial = textureAtlas.getMaterial();
-        world = new World(chunkMaterial);
+        window.world = new World(chunkMaterial); // Assign to global world
 
         // Generate the initial chunk(s) for Milestone 1
         console.log("Generating initial chunk...");
-        const initialChunk = world.addChunk(0, 0); // Create chunk at 0,0
+        const initialChunk = window.world.addChunk(0, 0); // Use window.world
         scene.add(initialChunk.getMesh()); // Add the chunk's mesh group to the scene
         console.log("Initial chunk added to scene.");
 
         // Create Player and Controls AFTER world is ready
-        player = new Player(camera, scene);
-        controls = new Controls(player.camera, renderer.domElement); // Pass player's camera
+        player = new Player(camera, scene); // Player now manages camera attachment
+        controls = new Controls(player, renderer.domElement); // Pass player instance
 
         // Initial camera setup is now handled within Player constructor
 
@@ -63,10 +65,11 @@ function animate() {
     const deltaTime = clock.getDelta();
 
     // Update game logic
-    if (player && world && controls) {
-        player.update(deltaTime, world, controls);
+    if (player && window.world && controls) {
+        player.update(deltaTime, window.world, controls);
+        // controls.update(deltaTime, window.world); // If update method needed in Controls
     }
-    // world.update(player.position); // Placeholder for dynamic chunk loading (Milestone 5)
+    // window.world.update(player.position); // Placeholder for dynamic chunk loading (Milestone 5)
 
     renderer.render(scene, camera);
 }

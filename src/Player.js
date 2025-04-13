@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { getBlockById } from './BlockRegistry.js';
 
 // Player constants
+const INTERACTION_REACH = 5; // Max distance player can interact with blocks
 const PLAYER_HEIGHT = 1.8;
 const PLAYER_WIDTH = 0.6;
 const PLAYER_DEPTH = 0.6;
@@ -39,6 +40,10 @@ export class Player {
             new THREE.Vector3(-PLAYER_WIDTH / 2, 0, -PLAYER_DEPTH / 2),
             new THREE.Vector3(PLAYER_WIDTH / 2, PLAYER_HEIGHT, PLAYER_DEPTH / 2)
         );
+
+        // Interaction Raycaster
+        this.raycaster = new THREE.Raycaster();
+        this.raycaster.far = INTERACTION_REACH; // Set max distance
     }
 
     /**
@@ -168,5 +173,39 @@ export class Player {
         this.velocity.set(0, 0, 0);
         this.onGround = false; // Assume not on ground immediately after respawn
         console.log("Player respawned.");
+    }
+
+    /**
+     * Tries to interact with the world based on where the player is looking.
+     * Called on mouse click.
+     * @param {World} world The world object to interact with.
+     */
+    tryInteract(world) {
+        if (!world) return; // Need world access
+
+        // Raycast from camera center
+        this.raycaster.setFromCamera({ x: 0, y: 0 }, this.camera); // Center of screen
+
+        // Get all chunk meshes currently in the scene for intersection test
+        // Inefficient for many chunks, but okay for now. Will need optimization later.
+        const chunkMeshes = [];
+        world.chunks.forEach(chunk => {
+            if (chunk.mesh) {
+                chunkMeshes.push(chunk.mesh);
+            }
+        });
+
+        const intersects = this.raycaster.intersectObjects(chunkMeshes);
+
+        if (intersects.length > 0) {
+            // For now, just log the first intersection
+            const intersection = intersects[0];
+            console.log("Intersection:", intersection);
+            // TODO M4.2: Calculate block coordinates from intersection.point and intersection.face.normal
+            // TODO M4.3: Implement block breaking (left-click)
+            // TODO M4.4/M4.6: Implement block placement (right-click)
+        } else {
+            console.log("No intersection within reach.");
+        }
     }
 }

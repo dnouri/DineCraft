@@ -7,12 +7,14 @@ import { PointerLockControls } from 'three/addons/controls/PointerLockControls.j
 export class Controls {
     /**
      * @param {THREE.Camera} camera The camera to control.
+     * @param {Player} player The player instance to control.
      * @param {HTMLElement} domElement The element to attach listeners to (renderer canvas).
      */
-    constructor(camera, domElement) {
-        this.camera = camera;
+    constructor(player, domElement) { // Changed camera to player
+        this.player = player; // Store player reference
+        this.camera = player.camera; // Get camera from player
         this.domElement = domElement;
-        this.pointerLockControls = new PointerLockControls(camera, domElement);
+        this.pointerLockControls = new PointerLockControls(this.camera, domElement);
 
         // Movement state flags
         this.moveForward = false;
@@ -30,9 +32,10 @@ export class Controls {
             this.pointerLockControls.lock();
         });
 
-        // Keyboard events
+        // Keyboard & Mouse events
         document.addEventListener('keydown', (event) => this.onKeyDown(event), false);
         document.addEventListener('keyup', (event) => this.onKeyUp(event), false);
+        this.domElement.addEventListener('mousedown', (event) => this.onMouseDown(event), false); // Add mouse down listener
 
         // Handle pointer lock changes (e.g., show menu when unlocked)
         this.pointerLockControls.addEventListener('lock', () => {
@@ -107,8 +110,22 @@ export class Controls {
         // this.moveUp = false;
     }
 
+    onMouseDown(event) {
+        if (!this.pointerLockControls.isLocked) return;
+
+        // We need access to the world to interact. This is a bit awkward here.
+        // For now, we assume the 'world' variable is accessible globally or passed differently.
+        // A better approach might involve an event system or passing world to Controls update.
+        // Let's assume 'window.world' exists for this step (will need refinement).
+        if (window.world && this.player) {
+             this.player.tryInteract(window.world); // Pass the world reference
+        } else {
+            console.warn("World reference not available for interaction.");
+        }
+    }
+
     // Optional: Add an update method if controls need per-frame updates
-    // update(deltaTime) {
+    // update(deltaTime, world) { // Could pass world here
     //     // Example: Apply sensitivity or smoothing
     // }
 }
