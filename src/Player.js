@@ -8,6 +8,7 @@ const PLAYER_DEPTH = 0.6;
 const PLAYER_EYE_HEIGHT = 1.6; // Relative to player base
 const PLAYER_SPEED = 5.0; // Units per second
 const GRAVITY = 20.0; // Units per second per second
+const RESPAWN_Y_LEVEL = -50; // Y level below which the player respawns
 // const JUMP_VELOCITY = 8.0; // For later
 
 export class Player {
@@ -17,8 +18,9 @@ export class Player {
      */
     constructor(camera, scene) {
         this.camera = camera;
+        this.initialSpawnPoint = new THREE.Vector3(8, 1, 8); // Store initial spawn point
         // Spawn the player in the center of the initial chunk (0,0) and just above ground level (Y=0)
-        this.position = new THREE.Vector3(8, 1, 8); // Center X=8, Z=8, slightly above ground Y=1
+        this.position = this.initialSpawnPoint.clone(); // Start at spawn point
         this.velocity = new THREE.Vector3();
         this.onGround = false;
 
@@ -151,5 +153,20 @@ export class Player {
         } else {
              this.playerObject.position.y += finalDeltaPosition.y;
         }
+
+        // --- 6. Check for Respawn ---
+        if (this.playerObject.position.y < RESPAWN_Y_LEVEL) {
+            this.respawn();
+        }
+    }
+
+    /**
+     * Resets the player's position to the spawn point and stops their movement.
+     */
+    respawn() {
+        this.playerObject.position.copy(this.initialSpawnPoint);
+        this.velocity.set(0, 0, 0);
+        this.onGround = false; // Assume not on ground immediately after respawn
+        console.log("Player respawned.");
     }
 }
