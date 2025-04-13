@@ -9,36 +9,36 @@ This checklist is based on the `spec.md` document and outlines the tasks require
 *Goal: Display a static, flat world made of simple, textured cubes. No player movement or interaction yet.*
 
 -   **Setup & Core:**
-    -   [ ] Create basic HTML file (`index.html`).
-    -   [ ] Include Three.js library (e.g., via CDN or local file).
-    -   [ ] Create `main.js` entry point.
-    -   [ ] Initialize Three.js `WebGLRenderer`, `Scene`, and `PerspectiveCamera` in `main.js`.
-    -   [ ] Set up basic lighting (`AmbientLight`, `DirectionalLight`).
-    -   [ ] Implement the main game loop using `requestAnimationFrame` in `main.js`.
-    -   [ ] Create basic structure for JS module files (`World.js`, `Chunk.js`, `BlockRegistry.js`, `TextureAtlas.js`, `utils.js`).
+    -   [x] Create basic HTML file (`index.html`).
+    -   [x] Include Three.js library (e.g., via CDN or local file).
+    -   [x] Create `main.js` entry point.
+    -   [x] Initialize Three.js `WebGLRenderer`, `Scene`, and `PerspectiveCamera` in `main.js`.
+    -   [x] Set up basic lighting (`AmbientLight`, `DirectionalLight`).
+    -   [x] Implement the main game loop using `requestAnimationFrame` in `main.js`.
+    -   [x] Create basic structure for JS module files (`World.js`, `Chunk.js`, `BlockRegistry.js`, `TextureAtlas.js`, `utils.js`).
 -   **Block System (Basic):**
-    -   [ ] Create `BlockRegistry.js`.
-    -   [ ] Define the `BLOCKS` data structure with `Air`, `Grass`, `Dirt`, `Stone`. Include `solid` property.
+    -   [x] Create `BlockRegistry.js`.
+    -   [x] Define the `BLOCKS` data structure with `Air`, `Grass`, `Dirt`, `Stone`. Include `solid` property.
 -   **Texture Atlas (Placeholder):**
-    -   [ ] Create a placeholder `atlas.png` (can be simple colors initially).
-    -   [ ] Create `TextureAtlas.js`.
-    -   [ ] Implement logic to load `atlas.png` using `THREE.TextureLoader`.
-    -   [ ] Apply `NearestFilter`.
-    -   [ ] Create a basic `MeshStandardMaterial` using the loaded texture.
+    -   [x] Create a placeholder `atlas.png` (can be simple colors initially).
+    -   [x] Create `TextureAtlas.js`.
+    -   [x] Implement logic to load `atlas.png` using `THREE.TextureLoader`.
+    -   [x] Apply `NearestFilter`.
+    -   [x] Create a basic `MeshStandardMaterial` using the loaded texture.
 -   **World & Chunk Management (Static):**
-    -   [ ] Create `World.js`.
-    -   [ ] Implement `World` class to hold a few static chunks.
-    -   [ ] Create `Chunk.js`.
-    -   [ ] Define chunk dimensions (16x256x16).
-    -   [ ] Implement `Chunk` class to store block data (e.g., `Uint8Array`).
-    -   [ ] Implement simple flat world generation logic (Grass, Dirt, Stone layers) to populate chunk data upon creation.
-    -   [ ] Implement `World.getBlock(worldX, worldY, worldZ)` (basic version for loaded chunks).
+    -   [x] Create `World.js`.
+    -   [x] Implement `World` class to hold a few static chunks.
+    -   [x] Create `Chunk.js`.
+    -   [x] Define chunk dimensions (16x256x16).
+    -   [x] Implement `Chunk` class to store block data (e.g., `Uint8Array`).
+    -   [x] Implement simple flat world generation logic (Grass, Dirt, Stone layers) to populate chunk data upon creation.
+    -   [x] Implement `World.getBlock(worldX, worldY, worldZ)` (basic version for loaded chunks).
 -   **Chunk Geometry & Rendering (Simple Cubes):**
-    -   [ ] Implement basic geometry generation in `Chunk.js`: Create a separate `THREE.BoxGeometry` and `THREE.Mesh` for *every* solid block. (Inefficient, will be replaced in Milestone 3).
-    -   [ ] Position each block mesh correctly within the chunk.
-    -   [ ] Add all block meshes for a chunk to a `THREE.Group` representing the chunk.
-    -   [ ] Add chunk groups to the main `THREE.Scene`.
-    -   [ ] Ensure the camera is positioned to see the generated world.
+    -   [x] Implement basic geometry generation in `Chunk.js`: Create a separate `THREE.BoxGeometry` and `THREE.Mesh` for *every* solid block. (Inefficient, will be replaced in Milestone 3).
+    -   [x] Position each block mesh correctly within the chunk.
+    -   [x] Add all block meshes for a chunk to a `THREE.Group` representing the chunk.
+    -   [x] Add chunk groups to the main `THREE.Scene`.
+    -   [x] Ensure the camera is positioned to see the generated world.
 
 ---
 

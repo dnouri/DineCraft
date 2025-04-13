@@ -1,0 +1,51 @@
+**CRITICAL INSTRUCTION: The final output image MUST be exactly 1020x1020 pixels.**
+
+**TASK:** Generate a 1020x1020 pixel PNG image named `atlas.png`. The *only* relevant content will be located within the **top-left 64x64 pixel area** of this image. The rest of the image (everything outside this 64x64 top-left corner) MUST be filled with a single, solid, uniform black color (#000000).
+
+**CONTENT WITHIN THE TOP-LEFT 64x64 AREA:**
+This 64x64 pixel area, located at the absolute top-left corner of the 1020x1020 image, must contain a precise 4x4 grid of 16x16 pixel art textures. These textures are for a simple block-based voxel game (like Minecraft).
+
+**STYLE REQUIREMENTS FOR THE 16x16 TEXTURES (within the 64x64 area):**
+*   **Pixel Art:** Use a distinct, sharp, low-resolution pixel art style.
+*   **No Anti-Aliasing:** Absolutely NO anti-aliasing, blurring, or smoothing between pixels within a texture OR between adjacent textures in the grid. Boundaries must be pixel-perfect.
+*   **Colors:** Use clear, distinct colors suitable for the described blocks.
+
+**EXACT LAYOUT of the 16x16 textures within the TOP-LEFT 64x64 pixel area:**
+
+*   **Coordinates:** (0,0) is the top-left pixel of the entire 1020x1020 image. The relevant area is from pixel (0,0) to pixel (63,63).
+
+*   **Grid Cell Definitions (X pixel range, Y pixel range): Content**
+    *   **(0-15, 0-15): Grass Top:** A green, pixelated grass texture.
+    *   **(16-31, 0-15): Grass Side:** A pixelated texture showing green grass on the top 3 pixels (Y=0 to Y=2) and brown dirt texture below that (Y=3 to Y=15).
+    *   **(32-47, 0-15): Dirt:** A brown, slightly varied, pixelated dirt texture. This texture will also be used for the bottom face of grass blocks.
+    *   **(48-63, 0-15): Stone:** A grey, slightly varied, pixelated cobblestone-like texture.
+
+    *   **(0-15, 16-31): Wood Top/Bottom:** A brown, pixelated wood texture showing end grain or rings.
+    *   **(16-31, 16-31): Wood Side:** A brown, pixelated wood bark texture with a clear vertical grain pattern.
+    *   **(32-47, 16-31): Unused Placeholder 1:** A solid, flat, bright magenta color (#FF00FF). Must be exactly 16x16 pixels.
+    *   **(48-63, 16-31): Unused Placeholder 2:** A solid, flat, bright cyan color (#00FFFF). Must be exactly 16x16 pixels.
+
+    *   **(0-15, 32-47): Unused Placeholder 3:** A solid, flat, black color (#000000). Must be exactly 16x16 pixels.
+    *   **(16-31, 32-47): Unused Placeholder 4:** A solid, flat, black color (#000000). Must be exactly 16x16 pixels.
+    *   **(32-47, 32-47): Unused Placeholder 5:** A solid, flat, black color (#000000). Must be exactly 16x16 pixels.
+    *   **(48-63, 32-47): Unused Placeholder 6:** A solid, flat, black color (#000000). Must be exactly 16x16 pixels.
+
+    *   **(0-15, 48-63): Unused Placeholder 7:** A solid, flat, black color (#000000). Must be exactly 16x16 pixels.
+    *   **(16-31, 48-63): Unused Placeholder 8:** A solid, flat, black color (#000000). Must be exactly 16x16 pixels.
+    *   **(32-47, 48-63): Unused Placeholder 9:** A solid, flat, black color (#000000). Must be exactly 16x16 pixels.
+    *   **(48-63, 48-63): Unused Placeholder 10:** A solid, flat, black color (#000000). Must be exactly 16x16 pixels.
+
+**FILLING THE REMAINDER OF THE 1020x1020 IMAGE:**
+*   Every pixel **outside** the top-left 64x64 area MUST be filled with solid black (#000000).
+*   This means the area from X=64 to X=1019 (for all Y) must be black.
+*   This means the area from Y=64 to Y=1019 (for all X) must be black.
+*   There should be absolutely NO other content, patterns, or colors outside the designated top-left 64x64 pixel zone.
+
+**FINAL OUTPUT REQUIREMENTS:**
+*   A single PNG file named `atlas.png`.
+*   Exact dimensions: 1020 pixels wide by 1020 pixels high.
+*   Pixel-perfect rendering according to the grid and content specifications within the top-left 64x64 area.
+*   The rest of the image must be solid black (#000000).
+*   No anti-aliasing anywhere. Sharp, clear pixels only.
+
+**REPEAT: The usable content is ONLY in the top-left 64x64 pixels. The rest of the 1020x1020 image MUST be solid black.**
