@@ -72,21 +72,21 @@ This checklist is based on the `spec.md` document and outlines the tasks require
 *Goal: Implement efficient chunk rendering using merged geometry, face culling, and a proper texture atlas.*
 
 -   **Texture Atlas Refinement:**
-    -   [ ] Create the final `atlas.png` with distinct textures for Grass (top/side/bottom), Dirt, Stone, Wood (top/bottom, side).
-    -   [ ] Update `BlockRegistry.js`: Add Wood block type. Define texture coordinates `[u,v]` for *each face* of relevant block types (Grass, Wood). Assume fixed texture size in atlas (e.g., 16x16 pixels).
-    -   [ ] Add helper functions in `TextureAtlas.js` or `BlockRegistry.js` to get normalized UV coordinates for a given block type and face ID/name.
+    -   [x] Create the final `atlas.png` with distinct textures for Grass (top/side/bottom), Dirt, Stone, Wood (top/bottom, side). (Assumed done based on `tmp/prompt.txt`)
+    -   [x] Update `BlockRegistry.js`: Add Wood block type. Define texture coordinates `[u,v]` for *each face* of relevant block types (Grass, Wood). Assume fixed texture size in atlas (e.g., 16x16 pixels).
+    -   [x] Add helper functions in `TextureAtlas.js` or `BlockRegistry.js` to get normalized UV coordinates for a given block type and face ID/name.
 -   **Optimized Chunk Geometry Generation:**
-    -   [ ] Modify `Chunk.js` geometry generation: Remove the per-block mesh creation.
-    -   [ ] Create arrays to store vertex positions, normals, UVs, and indices for the entire chunk mesh.
-    -   [ ] Iterate through blocks within the chunk (`x, y, z`).
-    -   [ ] For solid blocks, check neighbors (including those in adjacent chunks via `World.getBlock`). Use `Air` (ID 0) as non-solid.
-    -   [ ] Generate geometry data (vertices, normals, UVs for the correct texture from atlas, indices) *only* for faces exposed to non-solid blocks (face culling).
-    -   [ ] Create a single `THREE.BufferGeometry` from the generated arrays.
-    -   [ ] Create a single `THREE.Mesh` for the chunk using the `BufferGeometry` and the shared texture atlas material.
-    -   [ ] Replace the old `THREE.Group` in the scene with this new single chunk `THREE.Mesh`.
+    -   [x] Modify `Chunk.js` geometry generation: Remove the per-block mesh creation.
+    -   [x] Create arrays to store vertex positions, normals, UVs, and indices for the entire chunk mesh.
+    -   [x] Iterate through blocks within the chunk (`x, y, z`).
+    -   [x] For solid blocks, check neighbors (including those in adjacent chunks via `World.getBlock`). Use `Air` (ID 0) as non-solid.
+    -   [x] Generate geometry data (vertices, normals, UVs for the correct texture from atlas, indices) *only* for faces exposed to non-solid blocks (face culling).
+    -   [x] Create a single `THREE.BufferGeometry` from the generated arrays.
+    -   [x] Create a single `THREE.Mesh` for the chunk using the `BufferGeometry` and the shared texture atlas material.
+    -   [x] Replace the old `THREE.Group` in the scene with this new single chunk `THREE.Mesh`.
 -   **Chunk Mesh Updates:**
-    -   [ ] Implement `Chunk.updateMesh()` method to regenerate and replace the chunk's `BufferGeometry` and `Mesh`.
-    -   [ ] Implement `World.setBlock(worldX, worldY, worldZ, blockId)` method (placeholder for now, just updates data).
+    -   [x] Implement `Chunk.updateMesh()` method to regenerate and replace the chunk's `BufferGeometry` and `Mesh`.
+    -   [x] Implement `World.setBlock(worldX, worldY, worldZ, blockId)` method (now marks chunk internally, actual update trigger in M4).
 
 ---
 

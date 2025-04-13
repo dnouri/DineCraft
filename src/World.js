@@ -31,7 +31,8 @@ export class World {
                 chunkY * CHUNK_HEIGHT, // This will likely be 0 for M1 terrain generation
                 chunkZ * CHUNK_DEPTH
             );
-            const newChunk = new Chunk(chunkPosition, this.chunkMaterial);
+            // Pass the world reference to the chunk constructor
+            const newChunk = new Chunk(chunkPosition, this.chunkMaterial, this);
             this.chunks.set(key, newChunk);
             console.log(`Created chunk at ${key}`);
             return newChunk;
@@ -98,11 +99,12 @@ export class World {
         const chunk = this.getChunk(chunkX, chunkY, chunkZ);
 
         if (chunk) {
-            chunk.setBlock(localX, localY, localZ, blockId);
-            // TODO: Mark chunk (and potentially neighbors) as needing mesh update
-            console.log(`Set block at ${worldX},${worldY},${worldZ} in chunk ${chunkX},${chunkY},${chunkZ}`);
+            chunk.setBlock(localX, localY, localZ, blockId); // This now marks the chunk internally
+            // TODO M4/M5: Handle neighbor chunk updates if block is on boundary
+            console.log(`Set block data at ${worldX},${worldY},${worldZ} in chunk ${chunkX},${chunkY},${chunkZ}`);
+            // Note: Actual mesh update is triggered elsewhere (e.g., end of frame or interaction)
         } else {
-            console.warn(`Attempted to set block in non-existent chunk at ${chunkX},${chunkY},${chunkZ}`);
+            console.warn(`Attempted to set block data in non-existent chunk at ${chunkX},${chunkY},${chunkZ}`);
             // Optionally, could create the chunk here if needed
         }
     }
