@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { BLOCKS } from './BlockRegistry.js'; // Import BLOCKS for hotbar
 
 /**
- * Manages player input including mouse look and keyboard movement.
+ * Manages player input including mouse look, keyboard movement, and interaction/hotbar keys.
  */
 export class Controls {
     /**
@@ -22,6 +23,7 @@ export class Controls {
         this.moveLeft = false;
         this.moveRight = false;
         // this.moveUp = false; // Jump - for later
+        // No need to store selectedBlockId here, it's in Player
 
         this.initEventListeners();
     }
@@ -74,6 +76,24 @@ export class Controls {
             // case 'Space':
             //     this.moveUp = true; // Jump - for later
             //     break;
+
+            // Hotbar Keys (M4.5)
+            case 'Digit1': // Key '1'
+                this.player.selectedBlockId = BLOCKS[1].id; // Grass
+                console.log("Selected Block: Grass");
+                break;
+            case 'Digit2': // Key '2'
+                this.player.selectedBlockId = BLOCKS[2].id; // Dirt
+                console.log("Selected Block: Dirt");
+                break;
+            case 'Digit3': // Key '3'
+                this.player.selectedBlockId = BLOCKS[3].id; // Stone
+                console.log("Selected Block: Stone");
+                break;
+            case 'Digit4': // Key '4'
+                this.player.selectedBlockId = BLOCKS[4].id; // Wood
+                console.log("Selected Block: Wood");
+                break;
         }
     }
 
@@ -116,11 +136,11 @@ export class Controls {
         // We need access to the world to interact. This is a bit awkward here.
         // For now, we assume the 'world' variable is accessible globally or passed differently.
         // A better approach might involve an event system or passing world to Controls update.
-        // Let's assume 'window.world' exists for this step (will need refinement).
+        // Pass the world reference AND the event object
         if (window.world && this.player) {
-             this.player.tryInteract(window.world); // Pass the world reference
+             this.player.tryInteract(window.world, event);
         } else {
-            console.warn("World reference not available for interaction.");
+            console.warn("World or Player reference not available for interaction.");
         }
     }
 

@@ -90,45 +90,97 @@ This checklist is based on the `spec.md` document and outlines the tasks require
 
 ---
 
-## Milestone 4: Block Interaction (Step-by-Step)
+## Milestone 4: Block Interaction (Detailed Implementation)
 
-*Goal: Allow the player to break existing blocks and place new ones using the mouse.*
+*Goal: Allow the player to break existing blocks and place new ones using the mouse, based on detailed analysis.*
 
-1.  **Raycaster Setup & Basic Intersection:**
-    -   [x] Add `THREE.Raycaster` instance to `Player.js`.
-    -   [x] Add `mousedown` listener in `Controls.js`.
-    -   [x] Implement `Player.tryInteract()` triggered by `mousedown`.
-    -   [x] Perform basic raycast from camera center in `tryInteract()`.
-    -   [x] Log intersected objects to console.
-2.  **Identify Intersected Block Coordinates:**
-    -   [ ] Refine raycast to get intersection point & normal.
-    -   [ ] Calculate world coordinates `(x, y, z)` of the hit block.
-    -   [ ] Log block coordinates.
-3.  **Implement Block Breaking:**
-    -   [ ] On left-click (`event.button === 0`), call `world.setBlock(x, y, z, 0)`.
-    -   [ ] Ensure `Chunk.setBlock` sets `needsMeshUpdate = true`.
-    -   [ ] Add loop in `main.js` to check `needsMeshUpdate` and call `chunk.updateMesh()`.
-    -   [ ] Test breaking.
-4.  **Identify Placement Coordinates:**
-    -   [ ] On right-click (`event.button === 2`), calculate adjacent coordinates `(nx, ny, nz)` for placement.
-    -   [ ] Log placement coordinates.
-5.  **Implement Hotbar State:**
-    -   [ ] Add keyboard listeners for keys 1-4 in `Controls.js`.
-    -   [ ] Add `selectedBlockId` property to `Player.js` (default to Stone/Wood).
-    -   [ ] Update `selectedBlockId` on key press.
-6.  **Implement Block Placement:**
-    -   [ ] On right-click, get `selectedBlockId`.
-    -   [ ] Check if placement coords `(nx, ny, nz)` are Air (`world.getBlock`).
-    -   [ ] Check for collision between placement block and player AABB.
-    -   [ ] If checks pass, call `world.setBlock(nx, ny, nz, selectedBlockId)`.
-    -   [ ] Test placement.
-7.  **Implement Block Highlighting:**
-    -   [ ] Create wireframe `LineSegments` mesh in `main.js` (or `Highlight.js`). Add to scene, initially invisible.
-    -   [ ] Perform continuous/throttled raycast in game loop.
-    -   [ ] If block hit within range, position wireframe at block center & make visible.
-    -   [ ] If no block hit, make wireframe invisible.
-8.  **Add Wood to World Gen:**
-    -   [ ] Modify `Chunk.generateTerrain` to add some Wood blocks.
+*Dependencies:* `Controls.js`, `Player.js`, `World.js`, `Chunk.js`, `main.js`, `BlockRegistry.js`.
+
+1.  **Raycaster Setup & Basic Intersection (Verification):**
+    -   [x] Confirm `THREE.Raycaster` exists in `Player.js` with `far` set to `INTERACTION_REACH`.
+    -   [x] Confirm `mousedown` listener in `Controls.js` calls `player.tryInteract(window.world)` when pointer locked.
+    -   [x] Confirm `Player.tryInteract` performs raycast using `raycaster.setFromCamera({ x: 0, y: 0 }, this.camera)`.
+    -   [x] Confirm `Player.tryInteract` uses `raycaster.intersectObjects(chunkMeshes)` (Note: `chunkMeshes` collection is inefficient but acceptable for M4).
+    -   [x] Confirm intersection results are logged.
+2.  **Identify Intersected & Placement Block Coordinates (`Player.tryInteract`):**
+    -   [x] Inside `if (intersects.length > 0)`:
+        -   [x] Get the closest intersection: `const intersection = intersects[0];`
+        -   [x] Calculate the coordinates of the block that was hit:
+            ```javascript
+            // Apply a small epsilon along the *negative* normal to step inside the hit face
+            const hitPoint = intersection.point.clone().sub(intersection.face.normal.clone().multiplyScalar(0.01));
+            const hitBlockPos = new THREE.Vector3(Math.floor(hitPoint.x), Math.floor(hitPoint.y), Math.floor(hitPoint.z));
+            ```
+        -   [ ] Calculate the coordinates for placing a new block adjacent to the hit face:
+            ```javascript
+            // Apply a small epsilon along the *positive* normal to step into the adjacent air block
+            const placePoint = intersection.point.clone().add(intersection.face.normal.clone().multiplyScalar(0.01));
+            const placeBlockPos = new THREE.Vector3(Math.floor(placePoint.x), Math.floor(placePoint.y), Math.floor(placePoint.z));
+            ```
+        -   [x] Pass `hitBlockPos` and `placeBlockPos` to subsequent logic (or store them temporarily).
+        -   [x] Pass the mouse event button (`event.button`) from `Controls.onMouseDown` to `Player.tryInteract` to distinguish left/right clicks.
+3.  **Implement Block Breaking (`Player.tryInteract`, `World.setBlock`, `Chunk.setBlock`):**
+    -   [x] In `Player.tryInteract`, check if the interaction was triggered by a left-click (`button === 0`).
+    -   [x] If left-click and `hitBlockPos` is valid:
+        -   [x] Call `world.setBlock(hitBlockPos.x, hitBlockPos.y, hitBlockPos.z, BLOCKS[0].id); // Set to Air`.
+    -   [x] Verify that `Chunk.setBlock` correctly sets `this.needsMeshUpdate = true` when the block ID changes.
+4.  **Implement Mesh Update Trigger (`main.js` - `animate` loop):**
+    -   [x] *After* `player.update()` and *before* `renderer.render()`:
+        -   [x] Add a loop: `if (window.world) { window.world.chunks.forEach(chunk => { ... }); }`
+        -   [x] Inside the loop, check: `if (chunk.needsMeshUpdate)`
+        -   [x] If true:
+            -   [x] Call `chunk.updateMesh();`
+            -   [x] **(Handle Challenge #3)** Check if the mesh needs to be added to the scene:
+                ```javascript
+                if (chunk.mesh && !chunk.mesh.parent) {
+                    scene.add(chunk.mesh);
+                    console.log(`Added mesh for chunk ${chunk.position.x},${chunk.position.y},${chunk.position.z} to scene after update.`);
+                }
+                ```
+5.  **Implement Hotbar State (`Controls.js`, `Player.js`):**
+    -   [x] In `Player.js`, add a property: `this.selectedBlockId = BLOCKS[3].id; // Default to Stone`.
+    -   [x] In `Controls.js`, modify `initEventListeners` to add `keydown` listeners for 'Digit1', 'Digit2', 'Digit3', 'Digit4' (or 'Key1' etc. depending on testing).
+    -   [x] In `Controls.onKeyDown`, add cases for these keys:
+        -   `case 'Digit1': this.player.selectedBlockId = BLOCKS[1].id; break; // Grass`
+        -   `case 'Digit2': this.player.selectedBlockId = BLOCKS[2].id; break; // Dirt`
+        -   `case 'Digit3': this.player.selectedBlockId = BLOCKS[3].id; break; // Stone`
+        -   `case 'Digit4': this.player.selectedBlockId = BLOCKS[4].id; break; // Wood`
+    -   [ ] (Optional UI) Add an HTML element to display the name of the selected block and update it here.
+6.  **Implement Block Placement (`Player.tryInteract`, `World.setBlock`, `Player.js`):**
+    -   [x] In `Player.tryInteract`, check if the interaction was triggered by a right-click (`button === 2`).
+    -   [x] If right-click and `placeBlockPos` is valid:
+        -   [x] Get the block ID to place: `const blockIdToPlace = this.selectedBlockId;`
+        -   [x] **Check 1: Is target location empty?**
+            -   `const currentBlockId = world.getBlock(placeBlockPos.x, placeBlockPos.y, placeBlockPos.z);`
+            -   `if (currentBlockId !== BLOCKS[0].id) return; // Target not Air`
+        -   [x] **Check 2: Does placement collide with player? (Handle Challenge #5)**
+            -   `const blockBox = new THREE.Box3(placeBlockPos, placeBlockPos.clone().addScalar(1));`
+            -   `const playerBoxWorld = this.boundingBox.clone().translate(this.playerObject.position);`
+            -   `if (playerBoxWorld.intersectsBox(blockBox)) return; // Collision with player`
+        -   [x] **If both checks pass:**
+            -   `world.setBlock(placeBlockPos.x, placeBlockPos.y, placeBlockPos.z, blockIdToPlace);`
+7.  **Handle Chunk Boundary Updates (`World.setBlock`):**
+    -   [x] **(Handle Challenge #2)** Modify `World.setBlock`:
+        -   [x] After the call to `chunk.setBlock(localX, localY, localZ, blockId)` succeeds and marks the primary chunk dirty:
+        -   [x] Define boundary conditions: `const isOnBoundaryX = localX === 0 || localX === CHUNK_WIDTH - 1;` (similarly for Y and Z).
+        -   [x] If `isOnBoundaryX || isOnBoundaryY || isOnBoundaryZ`:
+            -   [x] Determine the world coordinates of the potentially affected neighbor block(s) (e.g., `worldX - 1`, `worldX + 1`, etc.).
+            -   [x] For each potential neighbor coordinate, calculate its chunk coordinates (`neighborChunkX`, `neighborChunkY`, `neighborChunkZ`).
+            -   [x] If the neighbor chunk coords are different from the original chunk coords:
+                -   `const neighborChunk = this.getChunk(neighborChunkX, neighborChunkY, neighborChunkZ);`
+                -   `if (neighborChunk) { neighborChunk.needsMeshUpdate = true; }`
+8.  **Implement Block Highlighting (Optional Enhancement):**
+    -   [ ] Create wireframe geometry/mesh (`THREE.BoxGeometry`, `EdgesGeometry`, `LineBasicMaterial`, `LineSegments`) in `main.js` or `Highlight.js`. Add to scene, set `visible = false`.
+    -   [ ] In `animate` loop (can be throttled):
+        -   [ ] Perform raycast like `tryInteract`.
+        -   [ ] If intersection found within `INTERACTION_REACH`:
+            -   [ ] Calculate `hitBlockPos` (as in step 2).
+            -   [ ] Position wireframe: `highlightMesh.position.set(hitBlockPos.x + 0.5, hitBlockPos.y + 0.5, hitBlockPos.z + 0.5);`
+            -   [ ] Set `highlightMesh.visible = true;`
+        -   [ ] Else (no intersection):
+            -   [ ] Set `highlightMesh.visible = false;`
+9.  **Add Wood to World Gen (Optional Content):**
+    -   [ ] Modify `Chunk.generateTerrain` to place some `BLOCKS[4].id` (Wood) blocks, e.g., replacing some surface grass or creating simple tree structures. Ensure `needsMeshUpdate` is true after generation.
 
 ---
 

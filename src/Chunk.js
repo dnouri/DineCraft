@@ -251,6 +251,7 @@ export class Chunk {
      * @param {number} y Local Y coordinate (0-255).
      * @param {number} z Local Z coordinate (0-15).
      * @param {number} blockId The ID of the block to set.
+     * @returns {boolean} True if the block was changed, false otherwise.
      */
     setBlock(x, y, z, blockId) {
         if (this._isValidCoordinate(x, y, z)) {
@@ -258,10 +259,11 @@ export class Chunk {
             if (this.blocks[index] !== blockId) {
                 this.blocks[index] = blockId;
                 this.needsMeshUpdate = true; // Mark this chunk for update
-
-                // TODO M4/M5: Mark neighboring chunks if block is on a boundary
+                // Neighbor marking is now handled in World.setBlock
+                return true; // Block was changed
             }
         }
+        return false; // Block was not changed (out of bounds or same ID)
     }
 
     /**

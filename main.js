@@ -24,8 +24,23 @@ scene.add(directionalLight);
 const textureAtlas = new TextureAtlas();
 let world;
 let player;
-let controls; // Declare world globally for now for Controls access (temporary)
-window.world = null;
+let controls;
+window.world = null; // Global world reference (temporary)
+window.scene = scene; // Global scene reference (temporary for debug)
+
+// --- Debug Highlight Mesh ---
+const highlightGeometry = new THREE.BoxGeometry(1.01, 1.01, 1.01); // Slightly larger than block
+const highlightMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffff00, // Bright yellow
+    transparent: true,
+    opacity: 0.3,
+    depthWrite: false // Don't obscure blocks behind it
+});
+const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMaterial);
+highlightMesh.visible = false; // Start invisible
+highlightMesh.renderOrder = 1; // Try to render it after solid geometry
+scene.add(highlightMesh);
+window.highlightMesh = highlightMesh; // Global reference for debug
 
 
 // --- Game Initialization ---
@@ -66,10 +81,25 @@ function animate() {
 
     // Update game logic
     if (player && window.world && controls) {
-        player.update(deltaTime, window.world, controls);
+        player.update(deltaTime, window.world, controls); // Update player physics/position
+        player.updateTargetBlock(window.world); // Update targeted block and highlight
         // controls.update(deltaTime, window.world); // If update method needed in Controls
     }
     // window.world.update(player.position); // Placeholder for dynamic chunk loading (Milestone 5)
+
+    // --- Mesh Update Check (M4.3 / Challenge #4) ---
+    if (window.world) {
+        window.world.chunks.forEach(chunk => { // Iterate through Map values
+            if (chunk.needsMeshUpdate) {
+                chunk.updateMesh();
+                // Handle adding new mesh to scene if it was created (Challenge #3)
+                if (chunk.mesh && !chunk.mesh.parent) {
+                    scene.add(chunk.mesh);
+                    console.log(`Added mesh for chunk ${chunk.position.x},${chunk.position.y},${chunk.position.z} to scene after update.`);
+                }
+            }
+        });
+    }
 
     renderer.render(scene, camera);
 }

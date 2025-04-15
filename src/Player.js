@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getBlockById } from './BlockRegistry.js';
+import { getBlockById, BLOCKS } from './BlockRegistry.js'; // Import BLOCKS
 
 // Player constants
 const INTERACTION_REACH = 5; // Max distance player can interact with blocks
@@ -44,6 +44,13 @@ export class Player {
         // Interaction Raycaster
         this.raycaster = new THREE.Raycaster();
         this.raycaster.far = INTERACTION_REACH; // Set max distance
+
+        // Hotbar state
+        this.selectedBlockId = BLOCKS[3].id; // Default to Stone (ID 3)
+
+        // Target block state (for continuous highlighting and interaction)
+        this.targetedHitPos = null;
+        this.targetedPlacePos = null;
     }
 
     /**
@@ -122,7 +129,7 @@ export class Player {
 
                         // Check X collision (using corrected Y position)
                         tempPlayerBox.translate(new THREE.Vector3(potentialPosition.x, correctedY, this.playerObject.position.z));
-                         if (tempPlayerBox.intersectsBox(blockBox)) {
+                        if (tempPlayerBox.intersectsBox(blockBox)) {
                             if (adjustedVelocity.x > 0 && this.playerObject.position.x + PLAYER_WIDTH / 2 <= blockBox.min.x) { // Moving right
                                 adjustedVelocity.x = 0;
                             } else if (adjustedVelocity.x < 0 && this.playerObject.position.x - PLAYER_WIDTH / 2 >= blockBox.max.x) { // Moving left
@@ -132,7 +139,7 @@ export class Player {
 
                         // Check Z collision (using corrected Y position)
                         tempPlayerBox.translate(new THREE.Vector3(this.playerObject.position.x, correctedY, potentialPosition.z));
-                         if (tempPlayerBox.intersectsBox(blockBox)) {
+                        if (tempPlayerBox.intersectsBox(blockBox)) {
                             if (adjustedVelocity.z > 0 && this.playerObject.position.z + PLAYER_DEPTH / 2 <= blockBox.min.z) { // Moving forward (+Z in Three.js)
                                 adjustedVelocity.z = 0;
                             } else if (adjustedVelocity.z < 0 && this.playerObject.position.z - PLAYER_DEPTH / 2 >= blockBox.max.z) { // Moving backward (-Z in Three.js)
@@ -154,9 +161,9 @@ export class Player {
         this.playerObject.position.z += finalDeltaPosition.z;
         // Apply corrected Y position directly if grounded or hit ceiling, otherwise apply delta Y
         if (this.onGround || (this.velocity.y === 0 && potentialPosition.y !== this.playerObject.position.y + deltaPosition.y)) {
-             this.playerObject.position.y = correctedY;
+            this.playerObject.position.y = correctedY;
         } else {
-             this.playerObject.position.y += finalDeltaPosition.y;
+            this.playerObject.position.y += finalDeltaPosition.y;
         }
 
         // --- 6. Check for Respawn ---
@@ -164,6 +171,60 @@ export class Player {
             this.respawn();
         }
     }
+
+    /**
+     * Updates the currently targeted block based on raycasting.
+     * Controls the visibility and position of the highlight mesh.
+     * @param {World} world The world object to raycast against.
+     */
+    updateTargetBlock(world) {
+        if (!world) return;
+
+        // Raycast from camera center
+        this.raycaster.setFromCamera({ x: 0, y: 0 }, this.camera);
+
+        // Get chunk meshes (Inefficient - same as before)
+        const chunkMeshes = [];
+        world.chunks.forEach(chunk => {
+            if (chunk.mesh) {
+                chunkMeshes.push(chunk.mesh);
+            }
+        });
+
+        const intersects = this.raycaster.intersectObjects(chunkMeshes);
+
+        if (intersects.length > 0) {
+            const intersection = intersects[0]; // Closest intersection
+
+            // Calculate Hit and Placement Coordinates (same logic as before)
+            const hitPoint = intersection.point.clone().sub(intersection.face.normal.clone().multiplyScalar(0.01));
+            const hitBlockPos = new THREE.Vector3(Math.floor(hitPoint.x), Math.floor(hitPoint.y), Math.floor(hitPoint.z));
+
+            const placePoint = intersection.point.clone().add(intersection.face.normal.clone().multiplyScalar(0.01));
+            const placeBlockPos = new THREE.Vector3(Math.floor(placePoint.x), Math.floor(placePoint.y), Math.floor(placePoint.z));
+
+            // Store the results
+            this.targetedHitPos = hitBlockPos;
+            this.targetedPlacePos = placeBlockPos;
+
+            // Update highlight mesh
+            if (window.highlightMesh) {
+                window.highlightMesh.position.set(hitBlockPos.x + 0.5, hitBlockPos.y + 0.5, hitBlockPos.z + 0.5);
+                window.highlightMesh.visible = true;
+            }
+
+        } else {
+            // No intersection within reach
+            this.targetedHitPos = null;
+            this.targetedPlacePos = null;
+
+            // Hide highlight mesh
+            if (window.highlightMesh) {
+                window.highlightMesh.visible = false;
+            }
+        }
+    }
+
 
     /**
      * Resets the player's position to the spawn point and stops their movement.
@@ -179,33 +240,57 @@ export class Player {
      * Tries to interact with the world based on where the player is looking.
      * Called on mouse click.
      * @param {World} world The world object to interact with.
+     * @param {MouseEvent} event The mouse event containing button information.
      */
-    tryInteract(world) {
-        if (!world) return; // Need world access
+    tryInteract(world, event) { // Add event parameter
+        if (!world || !event) return; // Need world and event access
 
-        // Raycast from camera center
-        this.raycaster.setFromCamera({ x: 0, y: 0 }, this.camera); // Center of screen
+        const button = event.button; // 0: left, 1: middle, 2: right
 
-        // Get all chunk meshes currently in the scene for intersection test
-        // Inefficient for many chunks, but okay for now. Will need optimization later.
-        const chunkMeshes = [];
-        world.chunks.forEach(chunk => {
-            if (chunk.mesh) {
-                chunkMeshes.push(chunk.mesh);
-            }
-        });
-
-        const intersects = this.raycaster.intersectObjects(chunkMeshes);
-
-        if (intersects.length > 0) {
-            // For now, just log the first intersection
-            const intersection = intersects[0];
-            console.log("Intersection:", intersection);
-            // TODO M4.2: Calculate block coordinates from intersection.point and intersection.face.normal
-            // TODO M4.3: Implement block breaking (left-click)
-            // TODO M4.4/M4.6: Implement block placement (right-click)
-        } else {
-            console.log("No intersection within reach.");
+        // Use the continuously updated target block positions
+        if (!this.targetedHitPos || !this.targetedPlacePos) {
+            // No block currently targeted, do nothing on click
+            return;
         }
-    }
-}
+
+        // Get the positions calculated by updateTargetBlock
+        const hitBlockPos = this.targetedHitPos;
+        const placeBlockPos = this.targetedPlacePos;
+
+        // --- Handle Interaction based on Mouse Button ---
+        if (button === 0) { // Left Click: Break Block
+            console.log(`Attempting to break block at ${hitBlockPos.x}, ${hitBlockPos.y}, ${hitBlockPos.z}`);
+            world.setBlock(hitBlockPos.x, hitBlockPos.y, hitBlockPos.z, BLOCKS[0].id); // Set to Air
+
+        } else if (button === 2) { // Right Click: Place Block
+            console.log(`Attempting to place block at ${placeBlockPos.x}, ${placeBlockPos.y}, ${placeBlockPos.z}`);
+            const blockIdToPlace = this.selectedBlockId;
+
+            // Check 1: Is target location empty?
+            const currentBlockId = world.getBlock(placeBlockPos.x, placeBlockPos.y, placeBlockPos.z);
+            if (currentBlockId !== BLOCKS[0].id) {
+                console.log("Placement failed: Target location is not Air.");
+                return; // Target not Air
+            }
+
+            // Check 2: Does placement collide with player?
+            const blockBox = new THREE.Box3(
+                placeBlockPos, // Min corner
+                placeBlockPos.clone().addScalar(1) // Max corner (add 1 to each component)
+            );
+            // Calculate player's current world bounding box
+            const playerBoxWorld = this.boundingBox.clone().translate(this.playerObject.position);
+
+            if (playerBoxWorld.intersectsBox(blockBox)) {
+                console.log("Placement failed: Collision with player.");
+                return; // Collision with player
+            }
+
+            // If both checks pass:
+            console.log(`Placing block ID ${blockIdToPlace} at ${placeBlockPos.x}, ${placeBlockPos.y}, ${placeBlockPos.z}`);
+            world.setBlock(placeBlockPos.x, placeBlockPos.y, placeBlockPos.z, blockIdToPlace);
+        } // End of 'else if (button === 2)' block
+        // Middle click (button 1) is ignored for now
+    // No 'else' needed here, if no block was targeted, we returned earlier
+    } // End of 'tryInteract' method
+} // End of 'Player' class

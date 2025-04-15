@@ -99,10 +99,49 @@ export class World {
         const chunk = this.getChunk(chunkX, chunkY, chunkZ);
 
         if (chunk) {
-            chunk.setBlock(localX, localY, localZ, blockId); // This now marks the chunk internally
-            // TODO M4/M5: Handle neighbor chunk updates if block is on boundary
-            console.log(`Set block data at ${worldX},${worldY},${worldZ} in chunk ${chunkX},${chunkY},${chunkZ}`);
-            // Note: Actual mesh update is triggered elsewhere (e.g., end of frame or interaction)
+            const blockChanged = chunk.setBlock(localX, localY, localZ, blockId); // setBlock now returns true if changed
+
+            if (blockChanged) {
+                // Block data actually changed, log and handle neighbor updates
+                console.log(`Set block data at ${worldX},${worldY},${worldZ} to ${blockId} in chunk ${chunkX},${chunkY},${chunkZ}`);
+
+                // Handle neighbor chunk updates if block is on boundary (Challenge #2 / M4.7)
+                const isOnBoundaryX = localX === 0 || localX === CHUNK_WIDTH - 1;
+                const isOnBoundaryY = localY === 0 || localY === CHUNK_HEIGHT - 1; // Check Y boundary too
+                const isOnBoundaryZ = localZ === 0 || localZ === CHUNK_DEPTH - 1;
+
+                if (isOnBoundaryX || isOnBoundaryY || isOnBoundaryZ) {
+                    console.log(`Block change on boundary at ${localX},${localY},${localZ}. Checking neighbors.`);
+                    // Check all 6 neighbors, even if only one boundary axis matches (easier than complex corner/edge logic)
+                    const neighborOffsets = [
+                        { x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 },
+                        { x: 0, y: 1, z: 0 }, { x: 0, y: -1, z: 0 },
+                        { x: 0, y: 0, z: 1 }, { x: 0, y: 0, z: -1 }
+                    ];
+
+                    for (const offset of neighborOffsets) {
+                        // Calculate the world coordinate of the block *in* the potential neighbor chunk
+                        const neighborWorldX = worldX + offset.x;
+                        const neighborWorldY = worldY + offset.y;
+                        const neighborWorldZ = worldZ + offset.z;
+
+                        // Find which chunk this neighbor coordinate belongs to
+                        const neighborChunkX = Math.floor(neighborWorldX / CHUNK_WIDTH);
+                        const neighborChunkY = Math.floor(neighborWorldY / CHUNK_HEIGHT);
+                        const neighborChunkZ = Math.floor(neighborWorldZ / CHUNK_DEPTH);
+
+                        // If the neighbor block is in a *different* chunk, mark that chunk dirty
+                        if (neighborChunkX !== chunkX || neighborChunkY !== chunkY || neighborChunkZ !== chunkZ) {
+                            const neighborChunk = this.getChunk(neighborChunkX, neighborChunkY, neighborChunkZ);
+                            if (neighborChunk && !neighborChunk.needsMeshUpdate) { // Only mark if not already marked
+                                console.log(`Marking neighbor chunk ${neighborChunkX},${neighborChunkY},${neighborChunkZ} for update.`);
+                                neighborChunk.needsMeshUpdate = true;
+                            }
+                        }
+                    }
+                }
+            }
+            // Note: Actual mesh update is triggered in main.js animate loop
         } else {
             console.warn(`Attempted to set block data in non-existent chunk at ${chunkX},${chunkY},${chunkZ}`);
             // Optionally, could create the chunk here if needed
