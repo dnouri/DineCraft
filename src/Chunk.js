@@ -155,8 +155,8 @@ export class Chunk {
                                 const vOffset = i * 3;
                                 const uvOffset = i * 2; // Offset for UV coordinates
 
-                                // Add position vertex (relative to chunk origin)
-                                positions.push(faceVertices[vOffset + 0] + x, faceVertices[vOffset + 1] + y, faceVertices[vOffset + 2] + z);
+                                // Add position vertex (relative to chunk origin, centered at x+0.5, y+0.5, z+0.5)
+                                positions.push(faceVertices[vOffset + 0] + x + 0.5, faceVertices[vOffset + 1] + y + 0.5, faceVertices[vOffset + 2] + z + 0.5);
 
                                 // Add normal (same normal for all 4 vertices of a face)
                                 const normal = CUBE_FACE_NORMALS[faceIndex];
