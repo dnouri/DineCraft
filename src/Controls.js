@@ -7,23 +7,23 @@ import { BLOCKS } from './BlockRegistry.js'; // Import BLOCKS for hotbar
  */
 export class Controls {
     /**
-     * @param {THREE.Camera} camera The camera to control.
-     * @param {Player} player The player instance to control.
+     * @param {Player} player The player instance to control and interact through.
+     * @param {World} world The world instance for interactions (passed to player).
      * @param {HTMLElement} domElement The element to attach listeners to (renderer canvas).
      */
-    constructor(player, domElement) { // Changed camera to player
-        this.player = player; // Store player reference
-        this.camera = player.camera; // Get camera from player
+    constructor(player, world, domElement) {
+        this.player = player;
+        this.world = world; // Store world reference (though interaction is via player now)
+        this.camera = player.camera; // Get camera from player for PointerLock
         this.domElement = domElement;
         this.pointerLockControls = new PointerLockControls(this.camera, domElement);
 
-        // Movement state flags
+        // Input state flags
         this.moveForward = false;
         this.moveBackward = false;
         this.moveLeft = false;
         this.moveRight = false;
-        // this.moveUp = false; // Jump - for later
-        // No need to store selectedBlockId here, it's in Player
+        // this.jump = false; // For later jump implementation
 
         this.initEventListeners();
     }
@@ -74,25 +74,25 @@ export class Controls {
                 this.moveRight = true;
                 break;
             // case 'Space':
-            //     this.moveUp = true; // Jump - for later
+            //     this.jump = true; // For later jump implementation
             //     break;
 
-            // Hotbar Keys (M4.5)
-            case 'Digit1': // Key '1'
+            // Hotbar Keys
+            case 'Digit1':
                 this.player.selectedBlockId = BLOCKS[1].id; // Grass
-                console.log("Selected Block: Grass");
+                // console.log("Selected Block: Grass");
                 break;
-            case 'Digit2': // Key '2'
+            case 'Digit2':
                 this.player.selectedBlockId = BLOCKS[2].id; // Dirt
-                console.log("Selected Block: Dirt");
+                // console.log("Selected Block: Dirt");
                 break;
-            case 'Digit3': // Key '3'
+            case 'Digit3':
                 this.player.selectedBlockId = BLOCKS[3].id; // Stone
-                console.log("Selected Block: Stone");
+                // console.log("Selected Block: Stone");
                 break;
-            case 'Digit4': // Key '4'
+            case 'Digit4':
                 this.player.selectedBlockId = BLOCKS[4].id; // Wood
-                console.log("Selected Block: Wood");
+                // console.log("Selected Block: Wood");
                 break;
         }
     }
@@ -117,35 +117,29 @@ export class Controls {
                 this.moveRight = false;
                 break;
             // case 'Space':
-            //     this.moveUp = false; // Jump - for later
+            //     this.jump = false; // For later jump implementation
             //     break;
         }
     }
 
+    /** Resets movement flags, typically called when pointer lock is lost. */
     resetMovementKeys() {
         this.moveForward = false;
         this.moveBackward = false;
         this.moveLeft = false;
         this.moveRight = false;
-        // this.moveUp = false;
+        // this.jump = false;
     }
 
+    /** Handles mouse button presses for interaction. */
     onMouseDown(event) {
-        if (!this.pointerLockControls.isLocked) return;
+        if (!this.pointerLockControls.isLocked || !this.player) return;
 
-        // We need access to the world to interact. This is a bit awkward here.
-        // For now, we assume the 'world' variable is accessible globally or passed differently.
-        // A better approach might involve an event system or passing world to Controls update.
-        // Pass the world reference AND the event object
-        if (window.world && this.player) {
-             this.player.tryInteract(window.world, event);
-        } else {
-            console.warn("World or Player reference not available for interaction.");
-        }
+        // Delegate interaction logic entirely to the player instance
+        this.player.tryInteract(event);
     }
 
-    // Optional: Add an update method if controls need per-frame updates
-    // update(deltaTime, world) { // Could pass world here
-    //     // Example: Apply sensitivity or smoothing
+    // update(deltaTime) {
+    //     // Potential future use for control smoothing, etc.
     // }
 }

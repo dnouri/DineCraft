@@ -62,12 +62,13 @@ export class Chunk {
         this.geometry = null; // Will hold the BufferGeometry
 
         // Block data stored in a flat Uint8Array for memory efficiency
-        // Y-major order: y * (width * depth) + z * width + x
+        // Y-major order: y * (CHUNK_WIDTH * CHUNK_DEPTH) + z * CHUNK_WIDTH + x
         this.blocks = new Uint8Array(CHUNK_VOLUME);
-        this.needsMeshUpdate = false; // Flag to indicate if geometry needs regeneration
+        // this.needsMeshUpdate = false; // Replaced by World's dirtyChunks set
 
         this.generateTerrain();
-        this.updateMesh(); // Generate the optimized mesh
+        // Mesh update is now triggered by World adding the chunk to dirtyChunks
+        // this.updateMesh(); // Don't call directly here anymore
     }
 
     /**
@@ -94,7 +95,7 @@ export class Chunk {
                 }
             }
         }
-        this.needsMeshUpdate = true; // Mark for mesh generation after terrain is set
+        // No need to set needsMeshUpdate here, World handles it via dirtyChunks
     }
 
 
@@ -224,8 +225,8 @@ export class Chunk {
             this.mesh.geometry = this.geometry;
         }
 
-        this.needsMeshUpdate = false; // Reset flag
-        console.log(`Updated mesh for chunk at ${this.position.x},${this.position.y},${this.position.z}`);
+        // needsMeshUpdate flag is managed by World's dirtyChunks set
+        // console.log(`Updated mesh for chunk at ${this.position.x},${this.position.y},${this.position.z}`);
     }
 
 
@@ -256,11 +257,12 @@ export class Chunk {
     setBlock(x, y, z, blockId) {
         if (this._isValidCoordinate(x, y, z)) {
             const index = this._getIndex(x, y, z);
-            if (this.blocks[index] !== blockId) {
+            const oldBlockId = this.blocks[index];
+            if (oldBlockId !== blockId) {
                 this.blocks[index] = blockId;
-                this.needsMeshUpdate = true; // Mark this chunk for update
-                // Neighbor marking is now handled in World.setBlock
-                return true; // Block was changed
+                // Marking dirty is now handled solely in World.setBlock
+                // this.needsMeshUpdate = true;
+                return true; // Block data was changed
             }
         }
         return false; // Block was not changed (out of bounds or same ID)
