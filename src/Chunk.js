@@ -102,14 +102,22 @@ export class Chunk {
     /**
      * Generates the geometry data (vertices, normals, uvs, indices) for the chunk mesh.
      * Implements face culling by checking neighboring blocks.
+     * 
+     * For testability, you can pass a custom getBlock function (worldX, worldY, worldZ) => blockId.
+     * If not provided, defaults to using this.world.getBlock.
+     * 
+     * @param {function} [getBlockFn] - Optional. Function to get blockId at world coordinates.
      * @returns {object} An object containing arrays: { positions, normals, uvs, indices }.
      */
-    generateGeometryData() {
+    generateGeometryData(getBlockFn) {
         const positions = [];
         const normals = [];
         const uvs = [];
         const indices = [];
         let vertexIndex = 0; // Tracks the current index for adding to the 'indices' array
+
+        // Default to using this.world.getBlock if no function is provided
+        const getBlock = getBlockFn || ((x, y, z) => this.world.getBlock(x, y, z));
 
         for (let y = 0; y < CHUNK_HEIGHT; y++) {
             for (let z = 0; z < CHUNK_DEPTH; z++) {
@@ -128,12 +136,12 @@ export class Chunk {
 
                     // Check neighbors in all 6 directions
                     const neighbors = [
-                        this.world.getBlock(worldX + 1, worldY, worldZ), // East (+x)
-                        this.world.getBlock(worldX - 1, worldY, worldZ), // West (-x)
-                        this.world.getBlock(worldX, worldY + 1, worldZ), // Top (+y)
-                        this.world.getBlock(worldX, worldY - 1, worldZ), // Bottom (-y)
-                        this.world.getBlock(worldX, worldY, worldZ + 1), // South (+z)
-                        this.world.getBlock(worldX, worldY, worldZ - 1)  // North (-z)
+                        getBlock(worldX + 1, worldY, worldZ), // East (+x)
+                        getBlock(worldX - 1, worldY, worldZ), // West (-x)
+                        getBlock(worldX, worldY + 1, worldZ), // Top (+y)
+                        getBlock(worldX, worldY - 1, worldZ), // Bottom (-y)
+                        getBlock(worldX, worldY, worldZ + 1), // South (+z)
+                        getBlock(worldX, worldY, worldZ - 1)  // North (-z)
                     ];
 
                     for (let faceIndex = 0; faceIndex < 6; faceIndex++) {

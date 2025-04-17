@@ -2,24 +2,24 @@
 
 This document outlines the steps to refactor and enhance the voxel sandbox project, based on best practices and expert discussion. Each milestone aims to produce a runnable and testable state.
 
-## Setup: Testing Framework
+## Setup: Testing Framework [COMPLETED]
 
--   [ ] **Install Testing Framework:** Choose and install a JavaScript testing framework (e.g., Vitest, Jest).
+-   [x] **Install Testing Framework:** Choose and install a JavaScript testing framework (e.g., Vitest, Jest).
     *   `npm install --save-dev vitest` (or `jest`)
     *   Configure the framework (e.g., `vitest.config.js` or `jest.config.js`).
     *   Add a test script to `package.json` (e.g., `"test": "vitest"`).
--   [ ] **Verify Setup:** Write a simple dummy test to ensure the framework runs correctly.
+-   [x] **Verify Setup:** Write a simple dummy test to ensure the framework runs correctly.
     *   Run: `npm test`
 
 ---
 
-## Milestone 1: Test Existing Geometry Generation
+## Milestone 1: Test Existing Geometry Generation [COMPLETED]
 
 **Goal:** Ensure the current face-culling meshing logic is correct and testable before refactoring.
 
--   [ ] **Refactor `generateGeometryData` for Testability (Optional but Recommended):**
+-   [x] **Refactor `generateGeometryData` for Testability (Optional but Recommended):**
     *   Modify `Chunk.generateGeometryData` so it doesn't directly call `this.world.getBlock`. Instead, pass neighbor block data (e.g., a function or pre-fetched data) as arguments. This decouples `Chunk` from `World` for testing.
--   [ ] **Write Unit Tests for `generateGeometryData`:**
+-   [x] **Write Unit Tests for `generateGeometryData`:**
     *   Create test file (e.g., `src/Chunk.test.js`).
     *   Test Case: Single solid block in empty space (should generate 6 faces).
     *   Test Case: Two adjacent solid blocks (should generate 10 faces total, culling the shared face).
@@ -28,9 +28,9 @@ This document outlines the steps to refactor and enhance the voxel sandbox proje
     *   Test Case: Correct UVs and normals for a specific face (e.g., the 'top' face of grass).
     *   Mock `BlockRegistry` functions (`getBlockById`, `getBlockTextureUV`, `generateFaceUVs`) or use the real ones if simple enough.
     *   Assert the exact content of `positions`, `normals`, `uvs`, and `indices` arrays for these simple scenarios.
--   [ ] **Run Tests:** Ensure all tests pass.
+-   [x] **Run Tests:** Ensure all tests pass.
     *   Run: `npm test`
--   [ ] **Verify Game:** Run the game and confirm rendering is unchanged.
+-   [x] **Verify Game:** Run the game and confirm rendering is unchanged.
     *   Run: (Your usual command to start the development server, e.g., `npm run dev` or `npx vite`)
 
 ---
