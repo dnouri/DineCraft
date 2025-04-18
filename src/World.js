@@ -18,19 +18,19 @@ export class World {
 
     /**
      * Retrieves an existing chunk or creates, generates, and stores a new one.
-     * Currently generates chunks only at Y=0 level.
      * @param {number} chunkX Chunk's X coordinate.
+     * @param {number} chunkY Chunk's Y coordinate.
      * @param {number} chunkZ Chunk's Z coordinate.
      * @returns {Chunk} The existing or newly created chunk.
      */
-    getOrCreateChunk(chunkX, chunkZ) { // Renamed from addChunk
-        const chunkY = 0; // Only Y=0 for now
-        const key = `${chunkX},${chunkY},${chunkZ}`;
+    getOrCreateChunk(chunkX, chunkY, chunkZ) { // Added chunkY parameter
+        // const chunkY = 0; // REMOVED: Use the passed-in chunkY
+        const key = `${chunkX},${chunkY},${chunkZ}`; // Use new key format (already correct)
         let chunk = this.chunks.get(key);
         if (!chunk) {
             const chunkPosition = new THREE.Vector3(
                 chunkX * CHUNK_WIDTH,
-                chunkY * CHUNK_HEIGHT, // Will be 0
+                chunkY * CHUNK_HEIGHT, // Use passed-in chunkY
                 chunkZ * CHUNK_DEPTH
             );
             // Pass world reference for neighbor lookups during mesh generation
@@ -50,8 +50,9 @@ export class World {
      * @param {number} chunkZ Chunk's Z coordinate.
      * @returns {Chunk | undefined} The chunk if it exists, otherwise undefined.
      */
-    getChunk(chunkX, chunkY, chunkZ) {
-        const key = `${chunkX},${chunkY},${chunkZ}`;
+    getChunk(chunkX, chunkY, chunkZ) { // Signature already accepts Y, Z
+        // TODO: The original implementation implicitly ignored Y. Now we use it.
+        const key = `${chunkX},${chunkY},${chunkZ}`; // Use the full key
         return this.chunks.get(key);
     }
 
@@ -148,12 +149,25 @@ export class World {
             const neighborChunkY = Math.floor(neighborWorldY / CHUNK_HEIGHT);
             const neighborChunkZ = Math.floor(neighborWorldZ / CHUNK_DEPTH);
 
-            // If the neighbor block is in a *different* chunk, mark that chunk dirty
-            if (neighborChunkX !== chunkX || neighborChunkY !== chunkY || neighborChunkZ !== chunkZ) {
-                const neighborChunk = this.getChunk(neighborChunkX, neighborChunkY, neighborChunkZ);
-                if (neighborChunk) {
-                    // console.log(`Marking neighbor chunk ${neighborChunkX},${neighborChunkY},${neighborChunkZ} for update due to boundary change.`);
-                    this.dirtyChunks.add(neighborChunk);
+            // Check if the neighbor is in a different chunk AND if the block change occurred on the relevant boundary face
+            const isDifferentChunk = neighborChunkX !== chunkX || neighborChunkY !== chunkY || neighborChunkZ !== chunkZ;
+
+            if (isDifferentChunk) {
+                // Determine if the change was on the specific boundary relevant to this neighbor offset
+                let shouldMarkNeighbor = false;
+                if (offset.x === 1 && localX === CHUNK_WIDTH - 1) shouldMarkNeighbor = true;
+                else if (offset.x === -1 && localX === 0) shouldMarkNeighbor = true;
+                else if (offset.y === 1 && localY === CHUNK_HEIGHT - 1) shouldMarkNeighbor = true;
+                else if (offset.y === -1 && localY === 0) shouldMarkNeighbor = true;
+                else if (offset.z === 1 && localZ === CHUNK_DEPTH - 1) shouldMarkNeighbor = true;
+                else if (offset.z === -1 && localZ === 0) shouldMarkNeighbor = true;
+
+                if (shouldMarkNeighbor) {
+                    const neighborChunk = this.getChunk(neighborChunkX, neighborChunkY, neighborChunkZ);
+                    if (neighborChunk) {
+                        // console.log(`Marking neighbor chunk ${neighborChunkX},${neighborChunkY},${neighborChunkZ} for update due to boundary change.`);
+                        this.dirtyChunks.add(neighborChunk);
+                    }
                 }
             }
         }

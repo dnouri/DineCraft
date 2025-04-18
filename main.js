@@ -50,14 +50,19 @@ async function initializeGame() {
         world = new World(chunkMaterial);
 
         // Generate initial chunk(s)
-        console.log("Generating initial chunk...");
-        const initialChunk = world.getOrCreateChunk(0, 0); // Use renamed method
-        if (initialChunk.mesh) { // Ensure mesh exists before adding
-             scene.add(initialChunk.mesh);
-             console.log("Initial chunk mesh added to scene.");
-        } else {
-             console.warn("Initial chunk generated but mesh is null.");
-        }
+        console.log("Generating initial chunks...");
+        const initialChunkTop = world.getOrCreateChunk(0, 0, 0); // Explicitly create at Y=0
+        const initialChunkBottom = world.getOrCreateChunk(0, -1, 0); // Create chunk below at Y=-1
+
+        // Meshes are added later by updateDirtyChunkMeshes, no need to add here
+        // if (initialChunkTop.mesh) {
+        //      scene.add(initialChunkTop.mesh);
+        //      console.log("Initial chunk mesh added to scene.");
+        // } else {
+        //      console.warn("Initial chunk generated but mesh is null.");
+        // }
+        // We rely on the updateDirtyChunkMeshes loop to add meshes now.
+        // REMOVED Dangling else block
 
 
         // Create Player and Controls AFTER world is ready

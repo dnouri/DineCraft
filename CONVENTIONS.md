@@ -13,6 +13,10 @@
     *   **Hypothesize & Test:** Formulate specific hypotheses about the cause of an issue or the behavior of the code. Mentally (or by describing the steps) trace the execution flow and data relevant to the hypothesis.
     *   **Validate Fundamentals:** Explicitly check fundamental assumptions (e.g., coordinate systems, object origins, data types, state management, API contracts) against the code. Misaligned fundamentals are often root causes.
     *   **Root Cause Focus:** Persist beyond the initial symptoms or plausible explanations. Dig deeper to find the underlying root cause of the problem.
+    *   **Iterative Verification:** After proposing and applying a set of changes (even small ones), the process *must* include verification steps:
+        1.  Run the automated test suite (e.g., `npm test`). Address any failures.
+        2.  Run the application itself (e.g., `npm run dev`). Perform a basic check for console errors, visual regressions, or core functionality breakage related to the change. Address any issues found.
+        Only proceed to the next step once both tests pass and the application runs without obvious new errors.
 
 **Interaction Style & Tone:**
 

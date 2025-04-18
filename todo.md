@@ -56,30 +56,28 @@ This document outlines the steps to refactor and enhance the voxel sandbox proje
 
 ---
 
-## Milestone 3: Vertical Chunk Management
+## Milestone 3: Vertical Chunk Management [COMPLETED]
 
 **Goal:** Enable a truly 3D world by supporting chunks at multiple Y levels.
 
--   [ ] **Refactor `World.js`:**
-    *   Modify `World.chunks` Map key to include Y coordinate (e.g., `"x,y,z"`).
-    *   Update `World.getChunk(x, y, z)` to use the new key.
-    *   Modify `World.getOrCreateChunk(chunkX, chunkZ)` to accept `chunkY` (or determine it logically if needed). Decide if chunks should be created on demand vertically or pre-generated in columns. For now, allow creation via `setBlock` implicitly or modify `getOrCreateChunk` to take `y`.
-    *   Review and update `World.getBlock`, `World.setBlock`, and `World.checkAndMarkNeighborsDirty` to ensure they correctly handle calculations and lookups across vertical chunk boundaries.
--   [ ] **Update Initial World Generation (`main.js`):**
-    *   Modify the initial setup to potentially create a small column of chunks (e.g., at 0,0,0 and 0,-1,0) to test verticality. Ensure `world.addAllChunksToScene` or the update loop correctly adds meshes from all Y levels.
--   [ ] **Review Player Spawn/Respawn:**
-    *   Ensure `Player.initialSpawnPoint` and `RESPAWN_Y_LEVEL` are appropriate for a world that might extend downwards.
--   [ ] **Write Unit Tests for `World.js`:**
-    *   Create `src/World.test.js`.
-    *   Test Case: `getBlock` / `setBlock` at coordinates spanning vertical chunk boundaries.
-    *   Test Case: `getChunk` retrieves chunks at different Y levels correctly.
-    *   Test Case: `checkAndMarkNeighborsDirty` correctly identifies and marks chunks above/below when a block on a horizontal boundary is changed.
--   [ ] **Run Tests:** Ensure all World tests pass.
+-   [x] **Refactor `World.js`:**
+    *   [x] Modify `World.chunks` Map key to include Y coordinate (e.g., `"x,y,z"`).
+    *   [x] Modify `World.getOrCreateChunk(chunkX, chunkZ)` to accept `chunkY` (or determine it logically if needed). Decide if chunks should be created on demand vertically or pre-generated in columns. For now, allow creation via `setBlock` implicitly or modify `getOrCreateChunk` to take `y`.
+    *   [x] Review and update `World.getBlock`, `World.setBlock`, and `World.checkAndMarkNeighborsDirty` to ensure they correctly handle calculations and lookups across vertical chunk boundaries.
+-   [x] **Update Initial World Generation (`main.js`):**
+    *   [x] Modify the initial setup to potentially create a small column of chunks (e.g., at 0,0,0 and 0,-1,0) to test verticality. Ensure `world.addAllChunksToScene` or the update loop correctly adds meshes from all Y levels.
+-   [x] **Review Player Spawn/Respawn:**
+    *   [x] Ensure `Player.initialSpawnPoint` and `RESPAWN_Y_LEVEL` are appropriate for a world that might extend downwards.
+-   [x] **Write Unit Tests for `World.js`:**
+    *   [x] Create `src/World.test.js`.
+    *   [x] Test Case: `getBlock` / `setBlock` at coordinates spanning vertical chunk boundaries.
+    *   [x] Test Case: `getChunk` retrieves chunks at different Y levels correctly.
+    *   [x] Test Case: `checkAndMarkNeighborsDirty` correctly identifies and marks chunks above/below when a block on a horizontal boundary is changed.
+-   [x] **Run Tests:** Ensure all World tests pass.
     *   Run: `npm test`
--   [ ] **Verify Game:**
-    *   Run the game. Check that multiple layers of chunks render if generated.
-    *   Fly/fall down (if gravity allows) or pillar up to cross vertical chunk boundaries.
-    *   Place and break blocks near the vertical boundaries (e.g., Y=0, Y=-1 or Y=255, Y=256 if chunk height is 256) and verify that meshes update correctly on both sides.
+-   [x] **Verify Game:**
+    *   [x] Run the game. Check that multiple layers of chunks render if generated.
+    *   [x] Place and break blocks near the vertical boundaries (e.g., Y=0, Y=-1 or Y=255, Y=256 if chunk height is 256) and verify that meshes update correctly on both sides.
     *   Run: (Your usual dev server command)
 
 ---
