@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { BLOCKS, getBlockById, getBlockTextureUV, generateFaceUVs } from './BlockRegistry.js';
+import { ChunkMesher } from './ChunkMesher.js'; // Import the new mesher
 
 // Chunk dimensions
 export const CHUNK_WIDTH = 16;
@@ -7,46 +8,13 @@ export const CHUNK_HEIGHT = 256;
 export const CHUNK_DEPTH = 16;
 const CHUNK_VOLUME = CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_DEPTH;
 
-// Geometry constants for building faces
-// Vertices ordered consistently for UV mapping (bl, br, tl, tr) relative to face direction
-const CUBE_FACE_VERTICES = [
-    // pos x (East) [+x]
-    [0.5, -0.5, 0.5,  0.5, -0.5, -0.5,  0.5, 0.5, 0.5,   0.5, 0.5, -0.5 ], // bl, br, tl, tr
-    // neg x (West) [-x]
-    [-0.5, -0.5, -0.5, -0.5, -0.5, 0.5,  -0.5, 0.5, -0.5,  -0.5, 0.5, 0.5 ], // bl, br, tl, tr
-    // pos y (Top) [+y]
-    [-0.5, 0.5, -0.5,  0.5, 0.5, -0.5,  -0.5, 0.5, 0.5,   0.5, 0.5, 0.5 ], // bl, br, tl, tr
-    // neg y (Bottom) [-y]
-    [-0.5, -0.5, 0.5,  0.5, -0.5, 0.5,  -0.5, -0.5, -0.5,  0.5, -0.5, -0.5 ], // bl, br, tl, tr
-    // pos z (South) [+z]
-    [-0.5, -0.5, 0.5,  0.5, -0.5, 0.5,  -0.5, 0.5, 0.5,   0.5, 0.5, 0.5 ], // bl, br, tl, tr
-    // neg z (North) [-z]
-    [0.5, -0.5, -0.5, -0.5, -0.5, -0.5,  0.5, 0.5, -0.5,  -0.5, 0.5, -0.5 ], // bl, br, tl, tr
-];
-
-// Normals are constant for all 4 vertices of a face
-const CUBE_FACE_NORMALS = [
-    [1, 0, 0],    // East
-    [-1, 0, 0],   // West
-    [0, 1, 0],    // Top
-    [0, -1, 0],   // Bottom
-    [0, 0, 1],    // South
-    [0, 0, -1],   // North
-];
-
-// Indices for two triangles per face (4 vertices per face)
-// Assumes vertex order: 0:bl, 1:br, 2:tl, 3:tr
-
-// Indices for different winding orders. We need specific ones per face type due to rendering anomaly.
-const INDICES_CW = [0, 2, 1, 1, 2, 3];   // Clockwise (Use for Top/Bottom anomaly where CW makes them visible)
-const INDICES_CCW = [0, 1, 2, 1, 3, 2];  // Counter-Clockwise (Use for Sides where CCW makes them visible)
-
-// Face names corresponding to CUBE_FACE_VERTICES/NORMALS order
-const FACE_NAMES = ['east', 'west', 'top', 'bottom', 'south', 'north']; // +x, -x, +y, -y, +z, -z
+// Note: Geometry constants (CUBE_FACE_VERTICES, CUBE_FACE_NORMALS, INDICES_CW/CCW, FACE_NAMES)
+// have been moved to ChunkMesher.js as they are specific to the meshing algorithm.
 
 /**
  * Represents a 16x256x16 section of the world.
- * Manages block data and the visual representation (mesh) of the chunk using optimized geometry.
+ * Manages block data and the visual representation (mesh) of the chunk.
+ * Mesh generation is delegated to ChunkMesher.
  */
 export class Chunk {
     /**
@@ -98,116 +66,19 @@ export class Chunk {
         // No need to set needsMeshUpdate here, World handles it via dirtyChunks
     }
 
+    // Note: generateGeometryData method has been removed and its logic moved to ChunkMesher.js
 
     /**
-     * Generates the geometry data (vertices, normals, uvs, indices) for the chunk mesh.
-     * Implements face culling by checking neighboring blocks.
-     * 
-     * For testability, you can pass a custom getBlock function (worldX, worldY, worldZ) => blockId.
-     * If not provided, defaults to using this.world.getBlock.
-     * 
-     * @param {function} [getBlockFn] - Optional. Function to get blockId at world coordinates.
-     * @returns {object} An object containing arrays: { positions, normals, uvs, indices }.
-     */
-    generateGeometryData(getBlockFn) {
-        const positions = [];
-        const normals = [];
-        const uvs = [];
-        const indices = [];
-        let vertexIndex = 0; // Tracks the current index for adding to the 'indices' array
-
-        // Default to using this.world.getBlock if no function is provided
-        const getBlock = getBlockFn || ((x, y, z) => this.world.getBlock(x, y, z));
-
-        for (let y = 0; y < CHUNK_HEIGHT; y++) {
-            for (let z = 0; z < CHUNK_DEPTH; z++) {
-                for (let x = 0; x < CHUNK_WIDTH; x++) {
-                    const blockId = this.getBlock(x, y, z);
-                    const block = getBlockById(blockId);
-
-                    if (!block.solid) {
-                        continue; // Skip air blocks
-                    }
-
-                    // World coordinates of the current block
-                    const worldX = this.position.x + x;
-                    const worldY = this.position.y + y;
-                    const worldZ = this.position.z + z;
-
-                    // Check neighbors in all 6 directions
-                    const neighbors = [
-                        getBlock(worldX + 1, worldY, worldZ), // East (+x)
-                        getBlock(worldX - 1, worldY, worldZ), // West (-x)
-                        getBlock(worldX, worldY + 1, worldZ), // Top (+y)
-                        getBlock(worldX, worldY - 1, worldZ), // Bottom (-y)
-                        getBlock(worldX, worldY, worldZ + 1), // South (+z)
-                        getBlock(worldX, worldY, worldZ - 1)  // North (-z)
-                    ];
-
-                    for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
-                        const neighborId = neighbors[faceIndex];
-                        const neighborBlock = getBlockById(neighborId);
-
-                        if (!neighborBlock.solid) {
-                            // Neighbor is air or non-solid, generate this face
-                            const faceVertices = CUBE_FACE_VERTICES[faceIndex];
-                            const faceNormals = CUBE_FACE_NORMALS[faceIndex];
-                            const faceName = FACE_NAMES[faceIndex];
-
-                            // Get UV coordinates for this face
-                            const uvData = getBlockTextureUV(blockId, faceName);
-                            if (!uvData) continue; // Should not happen for solid blocks defined correctly
-                            const faceUVs = generateFaceUVs(uvData[0], uvData[1]);
-
-                            // Add vertices, normals, and UVs for the 4 vertices of this face
-                            for (let i = 0; i < 4; i++) {
-                                const vOffset = i * 3;
-                                const uvOffset = i * 2; // Offset for UV coordinates
-
-                                // Add position vertex (relative to chunk origin, centered at x+0.5, y+0.5, z+0.5)
-                                positions.push(faceVertices[vOffset + 0] + x + 0.5, faceVertices[vOffset + 1] + y + 0.5, faceVertices[vOffset + 2] + z + 0.5);
-
-                                // Add normal (same normal for all 4 vertices of a face)
-                                const normal = CUBE_FACE_NORMALS[faceIndex];
-                                normals.push(normal[0], normal[1], normal[2]);
-
-                                // Add UV coordinate
-                                // The generateFaceUVs returns bl, br, tl, tr
-                                // The CUBE_FACE_VERTICES are now ordered bl, br, tl, tr
-                                // So we can push UVs sequentially as generated.
-                                uvs.push(faceUVs[uvOffset], faceUVs[uvOffset + 1]);
-                            }
-
-                            // Add indices for the two triangles of this face
-                            // Select indices based on face type to work around rendering anomaly:
-                            // Top/Bottom (faceIndex 2, 3) needed CW indices to be visible.
-                            // Sides (faceIndex 0, 1, 4, 5) needed CCW indices to be visible.
-                            let faceIndices;
-                            if (faceIndex === 2 || faceIndex === 3) { // Top or Bottom face
-                                faceIndices = INDICES_CW;
-                            } else { // Side faces (East, West, South, North)
-                                faceIndices = INDICES_CCW;
-                            }
-
-                            for (let i = 0; i < faceIndices.length; i++) {
-                                indices.push(vertexIndex + faceIndices[i]);
-                            }
-                            vertexIndex += 4; // Increment base index for the next face
-                        }
-                    }
-                }
-            }
-        }
-
-        return { positions, normals, uvs, indices };
-    }
-
-    /**
-     * Updates the chunk's mesh based on its current block data.
+     * Updates the chunk's mesh based on its current block data by calling ChunkMesher.
      * Creates or updates the BufferGeometry and Mesh.
      */
     updateMesh() {
-        const { positions, normals, uvs, indices } = this.generateGeometryData();
+        // Call the external ChunkMesher to generate geometry data
+        const { positions, normals, uvs, indices } = ChunkMesher.generate(
+            this.blocks, // Pass the chunk's block data
+            this.position, // Pass the chunk's world position
+            (worldX, worldY, worldZ) => this.world.getBlock(worldX, worldY, worldZ) // Pass the world's getBlock function for neighbor checks
+        );
 
         // Dispose existing geometry if it exists
         if (this.geometry) {

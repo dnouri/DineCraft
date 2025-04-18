@@ -35,23 +35,23 @@ This document outlines the steps to refactor and enhance the voxel sandbox proje
 
 ---
 
-## Milestone 2: Refactor Meshing Logic into `ChunkMesher`
+## Milestone 2: Refactor Meshing Logic into `ChunkMesher` [COMPLETED]
 
 **Goal:** Improve code structure by separating meshing concerns from the `Chunk` data container.
 
--   [ ] **Create `src/ChunkMesher.js`:**
+-   [x] **Create `src/ChunkMesher.js`:**
     *   Define a `ChunkMesher` class or module.
     *   Move the `generateGeometryData` logic (and potentially related constants like `CUBE_FACE_VERTICES`, `CUBE_FACE_NORMALS`, `INDICES_CW/CCW`, `FACE_NAMES`) into the `ChunkMesher`.
     *   The mesher function should accept chunk block data and necessary neighbor data/functions as input.
--   [ ] **Update `Chunk.js`:**
+-   [x] **Update `Chunk.js`:**
     *   Remove the meshing logic.
     *   In `updateMesh`, instantiate or call the `ChunkMesher` to get the geometry data, passing `this.blocks` and required neighbor information.
--   [ ] **Adapt Unit Tests:**
+-   [x] **Adapt Unit Tests:**
     *   Rename/move test file to `src/ChunkMesher.test.js`.
     *   Update tests to instantiate/call the `ChunkMesher` instead of `Chunk.generateGeometryData`.
--   [ ] **Run Tests:** Ensure all mesher tests pass.
+-   [x] **Run Tests:** Ensure all mesher tests pass.
     *   Run: `npm test`
--   [ ] **Verify Game:** Run the game. Visually confirm that chunk rendering is identical to before the refactor. Block placing/breaking should still update meshes correctly.
+-   [x] **Verify Game:** Run the game. Visually confirm that chunk rendering is identical to before the refactor. Block placing/breaking should still update meshes correctly.
     *   Run: (Your usual dev server command)
 
 ---
