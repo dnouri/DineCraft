@@ -19,15 +19,16 @@ This document outlines the requirements for a minimal "Minecraft-like" voxel san
     *   Chunk Size: 16 blocks wide (X), 256 blocks high (Y), 16 blocks deep (Z).
     *   Dynamic Loading: Chunks around the player's current position should be loaded and rendered. Chunks far away should be unloaded (data potentially kept, geometry disposed). A simple view distance (e.g., 4-8 chunks) should be implemented.
 *   **World Data Storage:**
-    *   Each chunk stores its block data in a 3D array (or TypedArray for potential optimization later). `chunkData[x][y][z] = blockTypeId;` (using local chunk coordinates).
-*   **World Generation (V1 - Simple Flat):**
-    *   Generate a flat world initially.
-    *   Example:
-        *   Y = 0: Grass Block
-        *   Y = -1, -2: Dirt Block
-        *   Y < -2: Stone Block
-        *   All other blocks: Air (ID 0)
-    *   The world should conceptually extend infinitely horizontally via chunk generation.
+    *   Each chunk stores its block data in a flat `Uint8Array` using local chunk coordinates (Y-major order).
+*   **World Generation (V1 - Simple Procedural):**
+    *   Generate terrain using 2D Perlin/Simplex noise to determine surface height (`surfaceY`) at each (X, Z) coordinate.
+    *   Block types are determined based on depth relative to `surfaceY`:
+        *   `worldY > surfaceY`: Air
+        *   `worldY == surfaceY`: Grass
+        *   `surfaceY - dirtDepth <= worldY < surfaceY`: Dirt
+        *   `worldY < surfaceY - dirtDepth`: Stone
+    *   A `TerrainGenerator` class encapsulates this logic, using a seed for reproducibility.
+    *   The world extends infinitely horizontally and vertically via on-demand chunk generation.
 
 ## 4. Rendering
 
@@ -55,13 +56,16 @@ This document outlines the requirements for a minimal "Minecraft-like" voxel san
         *   `S`: Move backward.
         *   `A`: Strafe left.
         *   `D`: Strafe right.
-        *   `Space`: Jump (V1.1 - initially, just basic ground collision).
-        *   Movement speed should be constant.
-*   **Collision Detection & Physics (V1 - Basic):**
+        *   `Space`: Jump (if on ground) / Fly Up (if flying).
+        *   `Shift`: Fly Down (if flying).
+        *   `F`: Toggle Flying Mode.
+        *   Movement speed constants defined for walking and flying.
+*   **Collision Detection & Physics (V1 - Improved):**
     *   Represent the player as an Axis-Aligned Bounding Box (AABB).
-    *   Implement basic collision detection between the player's AABB and the voxel grid. Prevent the player from moving into solid blocks.
-    *   Implement simple gravity: Apply a constant downward velocity. If the player is standing on a solid block, vertical velocity is zero.
-    *   No complex physics or jumping mechanics in the initial version.
+    *   Implement collision detection between the player's AABB and the voxel grid, checked per-axis (Y, then X, then Z) to resolve collisions.
+    *   Implement gravity (`GRAVITY` constant) applied when not flying.
+    *   Implement jumping: Apply vertical impulse (`JUMP_VELOCITY`) when jump key is pressed while `onGround`. `onGround` flag is determined during Y-axis collision resolution.
+    *   Implement flying: When `isFlying` is true, gravity is disabled. Vertical movement is controlled by jump/fly-down keys (`FLY_SPEED`). Horizontal movement uses `PLAYER_SPEED`.
 
 ## 6. Interaction
 

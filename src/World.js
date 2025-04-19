@@ -10,13 +10,12 @@ import { TerrainGenerator } from './TerrainGenerator.js'; // Import the generato
 export class World {
     /**
      * @param {THREE.Material} chunkMaterial The material to use for chunk meshes.
-     * @param {number} [seed=Date.now()] Optional seed for terrain generation. Defaults to current time.
+     * @param {number} [seed=Date.now()] Optional seed for terrain generation.
      */
-    constructor(chunkMaterial, seed = Date.now()) { // Add optional seed parameter
+    constructor(chunkMaterial, seed = Date.now()) {
         this.chunkMaterial = chunkMaterial;
         this.chunks = new Map(); // Key: "x,y,z", Value: Chunk instance
         this.dirtyChunks = new Set(); // Set of Chunk instances needing mesh updates
-        // Instantiate the terrain generator with the provided or default seed
         this.terrainGenerator = new TerrainGenerator(seed);
     }
 
@@ -27,14 +26,13 @@ export class World {
      * @param {number} chunkZ Chunk's Z coordinate.
      * @returns {Chunk} The existing or newly created chunk.
      */
-    getOrCreateChunk(chunkX, chunkY, chunkZ) { // Added chunkY parameter
-        // const chunkY = 0; // REMOVED: Use the passed-in chunkY
-        const key = `${chunkX},${chunkY},${chunkZ}`; // Use new key format (already correct)
+    getOrCreateChunk(chunkX, chunkY, chunkZ) {
+        const key = `${chunkX},${chunkY},${chunkZ}`;
         let chunk = this.chunks.get(key);
         if (!chunk) {
             const chunkPosition = new THREE.Vector3(
                 chunkX * CHUNK_WIDTH,
-                chunkY * CHUNK_HEIGHT, // Use passed-in chunkY
+                chunkY * CHUNK_HEIGHT,
                 chunkZ * CHUNK_DEPTH
             );
             // Pass world reference for neighbor lookups during mesh generation
@@ -42,7 +40,6 @@ export class World {
             this.chunks.set(key, chunk);
 
             // Generate terrain using the TerrainGenerator
-            // Directly populate the chunk's block data
             for (let x = 0; x < CHUNK_WIDTH; x++) {
                 for (let z = 0; z < CHUNK_DEPTH; z++) {
                     for (let y = 0; y < CHUNK_HEIGHT; y++) {
@@ -50,9 +47,7 @@ export class World {
                         const worldY = chunkPosition.y + y;
                         const worldZ = chunkPosition.z + z;
                         const blockId = this.terrainGenerator.getBlockId(worldX, worldY, worldZ);
-                        // Use the chunk's internal method to get the index (assuming it's accessible or made public)
-                        // If _getIndex is strictly private, Chunk needs a public method or World needs the formula.
-                        // Let's assume Chunk._getIndex is usable here for now.
+                        // Directly populate the chunk's block data using its internal index calculation
                         const index = chunk._getIndex(x, y, z);
                         chunk.blocks[index] = blockId;
                     }
@@ -73,9 +68,8 @@ export class World {
      * @param {number} chunkZ Chunk's Z coordinate.
      * @returns {Chunk | undefined} The chunk if it exists, otherwise undefined.
      */
-    getChunk(chunkX, chunkY, chunkZ) { // Signature already accepts Y, Z
-        // TODO: The original implementation implicitly ignored Y. Now we use it.
-        const key = `${chunkX},${chunkY},${chunkZ}`; // Use the full key
+    getChunk(chunkX, chunkY, chunkZ) {
+        const key = `${chunkX},${chunkY},${chunkZ}`;
         return this.chunks.get(key);
     }
 
@@ -100,8 +94,7 @@ export class World {
         if (chunk) {
             return chunk.getBlock(localX, localY, localZ);
         } else {
-            // If the chunk doesn't exist, treat it as air (or potentially generate based on rules)
-            // For M1, just return Air.
+            // If the chunk doesn't exist, treat it as air.
             return BLOCKS[0].id;
         }
     }
@@ -126,13 +119,10 @@ export class World {
         const chunk = this.getChunk(chunkX, chunkY, chunkZ);
 
         if (chunk) {
-            const blockChanged = chunk.setBlock(localX, localY, localZ, blockId); // setBlock now returns true if changed
+            const blockChanged = chunk.setBlock(localX, localY, localZ, blockId);
 
             if (blockChanged) {
-                // Block data actually changed, log and handle neighbor updates
-                // console.log(`Set block data at ${worldX},${worldY},${worldZ} to ${blockId} in chunk ${chunkX},${chunkY},${chunkZ}`);
                 this.dirtyChunks.add(chunk); // Mark the current chunk as dirty
-
                 // Check if the block is on a chunk boundary and mark neighbors dirty if necessary
                 this.checkAndMarkNeighborsDirty(worldX, worldY, worldZ, chunkX, chunkY, chunkZ, localX, localY, localZ);
             }
@@ -154,10 +144,9 @@ export class World {
             return; // Not on any boundary, no neighbors need updating
         }
 
-        // Check all 6 potential neighbors
         const neighborOffsets = [
-            { x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 },
-            { x: 0, y: 1, z: 0 }, { x: 0, y: -1, z: 0 },
+            { x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 }, // East, West
+            { x: 0, y: 1, z: 0 }, { x: 0, y: -1, z: 0 }, // Top, Bottom
             { x: 0, y: 0, z: 1 }, { x: 0, y: 0, z: -1 }
         ];
 
@@ -172,23 +161,22 @@ export class World {
             const neighborChunkY = Math.floor(neighborWorldY / CHUNK_HEIGHT);
             const neighborChunkZ = Math.floor(neighborWorldZ / CHUNK_DEPTH);
 
-            // Check if the neighbor is in a different chunk AND if the block change occurred on the relevant boundary face
+            // Check if the neighbor is in a different chunk
             const isDifferentChunk = neighborChunkX !== chunkX || neighborChunkY !== chunkY || neighborChunkZ !== chunkZ;
 
             if (isDifferentChunk) {
-                // Determine if the change was on the specific boundary relevant to this neighbor offset
+                // Determine if the change occurred on the specific boundary relevant to this neighbor offset
                 let shouldMarkNeighbor = false;
-                if (offset.x === 1 && localX === CHUNK_WIDTH - 1) shouldMarkNeighbor = true;
-                else if (offset.x === -1 && localX === 0) shouldMarkNeighbor = true;
-                else if (offset.y === 1 && localY === CHUNK_HEIGHT - 1) shouldMarkNeighbor = true;
-                else if (offset.y === -1 && localY === 0) shouldMarkNeighbor = true;
-                else if (offset.z === 1 && localZ === CHUNK_DEPTH - 1) shouldMarkNeighbor = true;
-                else if (offset.z === -1 && localZ === 0) shouldMarkNeighbor = true;
+                if (offset.x === 1 && localX === CHUNK_WIDTH - 1) shouldMarkNeighbor = true;  // Changed block on East face
+                else if (offset.x === -1 && localX === 0) shouldMarkNeighbor = true; // Changed block on West face
+                else if (offset.y === 1 && localY === CHUNK_HEIGHT - 1) shouldMarkNeighbor = true; // Changed block on Top face
+                else if (offset.y === -1 && localY === 0) shouldMarkNeighbor = true; // Changed block on Bottom face
+                else if (offset.z === 1 && localZ === CHUNK_DEPTH - 1) shouldMarkNeighbor = true; // Changed block on South face
+                else if (offset.z === -1 && localZ === 0) shouldMarkNeighbor = true; // Changed block on North face
 
                 if (shouldMarkNeighbor) {
                     const neighborChunk = this.getChunk(neighborChunkX, neighborChunkY, neighborChunkZ);
                     if (neighborChunk) {
-                        // console.log(`Marking neighbor chunk ${neighborChunkX},${neighborChunkY},${neighborChunkZ} for update due to boundary change.`);
                         this.dirtyChunks.add(neighborChunk);
                     }
                 }
@@ -206,15 +194,14 @@ export class World {
         if (this.dirtyChunks.size === 0) return;
 
         this.dirtyChunks.forEach(chunk => {
-            const meshExisted = !!chunk.mesh; // Check if mesh existed before update
+            const meshExisted = !!chunk.mesh;
             chunk.updateMesh(); // Regenerate geometry and update/create mesh
-            // If the mesh was newly created (didn't exist before), add it to the scene
+            // If the mesh was newly created, add it to the scene
             if (chunk.mesh && !meshExisted) {
                  scene.add(chunk.mesh);
-                 // console.log(`Added new mesh for chunk ${chunk.position.x},${chunk.position.y},${chunk.position.z} to scene.`);
             }
         });
-        this.dirtyChunks.clear(); // Clear the set after processing
+        this.dirtyChunks.clear();
     }
 
     /**

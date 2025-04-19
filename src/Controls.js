@@ -13,8 +13,8 @@ export class Controls {
      */
     constructor(player, world, domElement) {
         this.player = player;
-        this.world = world; // Store world reference (though interaction is via player now)
-        this.camera = player.camera; // Get camera from player for PointerLock
+        this.world = world; // Store world reference (passed to player for interaction)
+        this.camera = player.camera;
         this.domElement = domElement;
         this.pointerLockControls = new PointerLockControls(this.camera, domElement);
 
@@ -32,15 +32,13 @@ export class Controls {
     }
 
     initEventListeners() {
-        // Pointer Lock activation
         this.domElement.addEventListener('click', () => {
             this.pointerLockControls.lock();
         });
 
-        // Keyboard & Mouse events
         document.addEventListener('keydown', (event) => this.onKeyDown(event), false);
         document.addEventListener('keyup', (event) => this.onKeyUp(event), false);
-        this.domElement.addEventListener('mousedown', (event) => this.onMouseDown(event), false); // Add mouse down listener
+        this.domElement.addEventListener('mousedown', (event) => this.onMouseDown(event), false);
 
         // Handle pointer lock changes (e.g., show menu when unlocked)
         this.pointerLockControls.addEventListener('lock', () => {
@@ -52,7 +50,7 @@ export class Controls {
             console.log('Pointer unlocked');
             // You could show menus here
             // Reset movement keys on unlock to prevent unwanted movement
-            this.resetInputKeys(); // Renamed for clarity
+            this.resetInputKeys();
         });
     }
 
@@ -77,33 +75,29 @@ export class Controls {
                 this.moveRight = true;
                 break;
             case 'Space':
-                this.jumpKeyPressed = true; // Set jump flag
+                this.jumpKeyPressed = true;
                 break;
             case 'ShiftLeft':
             case 'ShiftRight':
-                this.flyDownKeyPressed = true; // Set fly down flag
+                this.flyDownKeyPressed = true;
                 break;
-            case 'KeyF': // Added KeyF handler
-                // Set the request flag. Player update loop will handle the toggle.
+            case 'KeyF':
+                // Set the request flag. Player update loop will handle the actual toggle.
                 this.toggleFlyRequested = true;
                 break;
 
             // Hotbar Keys
             case 'Digit1':
                 this.player.selectedBlockId = BLOCKS[1].id; // Grass
-                // console.log("Selected Block: Grass");
                 break;
             case 'Digit2':
                 this.player.selectedBlockId = BLOCKS[2].id; // Dirt
-                // console.log("Selected Block: Dirt");
                 break;
             case 'Digit3':
                 this.player.selectedBlockId = BLOCKS[3].id; // Stone
-                // console.log("Selected Block: Stone");
                 break;
             case 'Digit4':
                 this.player.selectedBlockId = BLOCKS[4].id; // Wood
-                // console.log("Selected Block: Wood");
                 break;
         }
     }
@@ -128,24 +122,24 @@ export class Controls {
                 this.moveRight = false;
                 break;
             case 'Space':
-                this.jumpKeyPressed = false; // Reset jump flag
+                this.jumpKeyPressed = false;
                 break;
             case 'ShiftLeft':
             case 'ShiftRight':
-                this.flyDownKeyPressed = false; // Reset fly down flag
+                this.flyDownKeyPressed = false;
                 break;
-            // No need to handle KeyF up, toggleFlyRequested is reset by Player
+            // No need to handle KeyF up, toggleFlyRequested is a one-shot flag reset by Player
         }
     }
 
     /** Resets input flags, typically called when pointer lock is lost. */
-    resetInputKeys() { // Renamed for clarity
+    resetInputKeys() {
         this.moveForward = false;
         this.moveBackward = false;
         this.moveLeft = false;
         this.moveRight = false;
-        this.jumpKeyPressed = false; // Reset jump state
-        this.flyDownKeyPressed = false; // Reset fly down state
+        this.jumpKeyPressed = false;
+        this.flyDownKeyPressed = false;
         // toggleFlyRequested is a one-shot trigger, no need to reset here
     }
 

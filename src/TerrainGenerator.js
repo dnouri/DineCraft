@@ -31,7 +31,7 @@ export class TerrainGenerator {
      * @returns {number} The block ID (Air, Grass, Dirt, or Stone).
      */
     getBlockId(worldX, worldY, worldZ) {
-        // 1. Calculate surface height using 2D noise based on X and Z
+        // Calculate surface height using 2D noise based on X and Z
         const surfaceNoiseValue = this.noise.simplex2(
             worldX / this.surfaceScale,
             worldZ / this.surfaceScale
@@ -41,7 +41,7 @@ export class TerrainGenerator {
         // Example: baseLevel=0, amplitude=15 -> range is -15 to +15
         const surfaceY = Math.floor(this.baseLevel + surfaceNoiseValue * this.amplitude);
 
-        // 2. Determine block type based on worldY relative to surfaceY
+        // Determine block type based on worldY relative to surfaceY
         if (worldY > surfaceY) {
             // Above the surface
             return BLOCKS[0].id; // Air

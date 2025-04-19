@@ -35,7 +35,7 @@ export const BLOCKS = {
             all: [0.75, 0.75]     // Stone texture at (3,3) for all faces
         },
     },
-    4: { // Adding Wood Block
+    4: {
         id: 4,
         name: 'wood',
         solid: true,
@@ -79,7 +79,7 @@ export function getBlockTextureUV(blockId, faceName) {
  * Assumes standard texture mapping (bottom-left, bottom-right, top-left, top-right).
  * @param {number} u The U coordinate of the bottom-left corner.
  * @param {number} v The V coordinate of the bottom-left corner.
- * @returns {number[]} A flat array of [u0, v0, u1, v1, u2, v2, u3, v3].
+ * @returns {number[]} A flat array of UV coordinates for the face vertices.
  */
 export function generateFaceUVs(u, v) {
     return [

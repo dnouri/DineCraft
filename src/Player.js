@@ -74,41 +74,12 @@ export class Player {
         }
 
         // --- Calculate Velocity based on State (Flying or Walking/Jumping) ---
-        const inputVelocity = new THREE.Vector3(); // Horizontal input direction
+        const inputVelocity = new THREE.Vector3();
 
         if (this.isFlying) {
             // --- Flying Logic ---
             // No gravity applied
 
-            // Calculate Horizontal Input Velocity (uses PLAYER_SPEED)
-            const speed = PLAYER_SPEED; // Use PLAYER_SPEED for horizontal flight too
-            if (controls.moveForward) inputVelocity.z -= 1;
-            if (controls.moveBackward) inputVelocity.z += 1;
-            if (controls.moveLeft) inputVelocity.x -= 1;
-            if (controls.moveRight) inputVelocity.x += 1;
-
-            if (inputVelocity.lengthSq() > 0) {
-                inputVelocity.normalize().multiplyScalar(speed);
-            }
-            inputVelocity.applyQuaternion(this.camera.quaternion); // Apply camera yaw
-
-            this.velocity.x = inputVelocity.x;
-            this.velocity.z = inputVelocity.z;
-
-            // Calculate Vertical Velocity (uses FLY_SPEED)
-            this.velocity.y = 0; // Start with no vertical movement
-            if (controls.jumpKeyPressed) { // Space for up
-                this.velocity.y = FLY_SPEED;
-            } else if (controls.flyDownKeyPressed) { // Shift for down
-                this.velocity.y = -FLY_SPEED;
-            }
-
-        } else {
-            // --- Walking/Jumping Logic ---
-            // 1. Apply Gravity
-            this.velocity.y -= GRAVITY * deltaTime;
-
-            // 2. Calculate Horizontal Input Velocity (uses PLAYER_SPEED)
             const speed = PLAYER_SPEED;
             if (controls.moveForward) inputVelocity.z -= 1;
             if (controls.moveBackward) inputVelocity.z += 1;
@@ -118,24 +89,51 @@ export class Player {
             if (inputVelocity.lengthSq() > 0) {
                 inputVelocity.normalize().multiplyScalar(speed);
             }
-            inputVelocity.applyQuaternion(this.camera.quaternion); // Apply camera yaw
+            inputVelocity.applyQuaternion(this.camera.quaternion);
 
             this.velocity.x = inputVelocity.x;
             this.velocity.z = inputVelocity.z;
 
-            // 3. Handle Jumping
+            // Vertical flying velocity
+            this.velocity.y = 0;
+            if (controls.jumpKeyPressed) { // Space for up
+                this.velocity.y = FLY_SPEED;
+            } else if (controls.flyDownKeyPressed) { // Shift for down
+                this.velocity.y = -FLY_SPEED;
+            }
+
+        } else {
+            // --- Walking/Jumping Logic ---
+            // Apply Gravity
+            this.velocity.y -= GRAVITY * deltaTime;
+
+            // Horizontal Input Velocity
+            const speed = PLAYER_SPEED;
+            if (controls.moveForward) inputVelocity.z -= 1;
+            if (controls.moveBackward) inputVelocity.z += 1;
+            if (controls.moveLeft) inputVelocity.x -= 1;
+            if (controls.moveRight) inputVelocity.x += 1;
+
+            if (inputVelocity.lengthSq() > 0) {
+                inputVelocity.normalize().multiplyScalar(speed);
+            }
+            inputVelocity.applyQuaternion(this.camera.quaternion);
+
+            this.velocity.x = inputVelocity.x;
+            this.velocity.z = inputVelocity.z;
+
+            // Handle Jumping
             if (controls.jumpKeyPressed && this.onGround) {
-                this.velocity.y = JUMP_VELOCITY; // Apply jump impulse
-                this.onGround = false; // Player is no longer on the ground - SET HERE
+                this.velocity.y = JUMP_VELOCITY;
+                this.onGround = false; // Player is no longer on the ground after initiating jump
             }
         }
 
         // --- Common Logic: Collision Detection & Position Update ---
-        // Calculate Potential Position Change
         const deltaPosition = this.velocity.clone().multiplyScalar(deltaTime);
 
-        // Collision Detection & Resolution (Simplified Approach)
-        // NOTE: onGround is now ONLY set true during Y collision resolution (landing)
+        // Collision Detection & Resolution
+        // NOTE: onGround is only set true during Y collision resolution (landing)
         // and ONLY set false when initiating a jump.
         const currentPos = this.playerObject.position;
         const playerBox = this.boundingBox.clone(); // Local bounding box
@@ -156,7 +154,7 @@ export class Player {
                 // Player feet position = ceiling_bottom_surface - player_height
                 potentialPosition.y = Math.floor(playerBoxYCheck.max.y) - PLAYER_HEIGHT;
             }
-            this.velocity.y = 0; // Stop vertical movement on collision
+            this.velocity.y = 0;
         }
 
         // --- Check X Collision ---
@@ -164,7 +162,6 @@ export class Player {
         // Use the *potentially corrected* Y position for subsequent checks
         const playerBoxXCheck = playerBox.clone().translate(new THREE.Vector3(potentialPosX, potentialPosition.y, currentPos.z));
         if (this.checkCollision(playerBoxXCheck)) {
-            // Collision occurred along X. Revert X movement by setting potential back to current.
             potentialPosition.x = currentPos.x;
             this.velocity.x = 0;
         }
@@ -174,15 +171,14 @@ export class Player {
         // Use the *potentially corrected* Y and X positions
         const playerBoxZCheck = playerBox.clone().translate(new THREE.Vector3(potentialPosition.x, potentialPosition.y, potentialPosZ));
         if (this.checkCollision(playerBoxZCheck)) {
-            // Collision occurred along Z. Revert Z movement.
             potentialPosition.z = currentPos.z;
             this.velocity.z = 0;
         }
 
-        // 5. Update Player Position
+        // Update Player Position
         this.playerObject.position.copy(potentialPosition);
 
-        // 6. Check for Respawn
+        // Check for Respawn
         if (this.playerObject.position.y < RESPAWN_Y_LEVEL) {
             this.respawn();
         }
@@ -214,13 +210,13 @@ export class Player {
                             new THREE.Vector3(x + 1, y + 1, z + 1)
                         );
                         if (playerBoxWorld.intersectsBox(blockBox)) {
-                            return true; // Collision detected
+                            return true;
                         }
                     }
                 }
             }
         }
-        return false; // No collision
+        return false;
     }
 
 
@@ -229,10 +225,8 @@ export class Player {
      * Controls the visibility and position of the highlight mesh.
      */
     updateTargetBlock() {
-        // Raycast from camera center
         this.raycaster.setFromCamera({ x: 0, y: 0 }, this.camera);
 
-        // Get chunk meshes efficiently from the world
         const chunkMeshes = this.world.getChunkMeshes();
         if (chunkMeshes.length === 0) {
              this.targetedHitPos = null;
@@ -244,7 +238,7 @@ export class Player {
         const intersects = this.raycaster.intersectObjects(chunkMeshes);
 
         if (intersects.length > 0) {
-            const intersection = intersects[0]; // Closest intersection
+            const intersection = intersects[0];
 
             // Calculate Hit and Placement Coordinates
             // Offset slightly into/out of the block based on the face normal
@@ -254,16 +248,14 @@ export class Player {
             const placePoint = intersection.point.clone().add(intersection.face.normal.clone().multiplyScalar(0.01));
             const placeBlockPos = new THREE.Vector3(Math.floor(placePoint.x), Math.floor(placePoint.y), Math.floor(placePoint.z));
 
-            // Store the results
             this.targetedHitPos = hitBlockPos;
             this.targetedPlacePos = placeBlockPos;
 
-            // Update highlight mesh position and visibility
             this.highlightMesh.position.set(hitBlockPos.x + 0.5, hitBlockPos.y + 0.5, hitBlockPos.z + 0.5);
             this.highlightMesh.visible = true;
 
         } else {
-            // No intersection within reach
+            // No intersection
             this.targetedHitPos = null;
             this.targetedPlacePos = null;
             this.highlightMesh.visible = false;
@@ -291,7 +283,6 @@ export class Player {
 
         const button = event.button; // 0: left, 1: middle, 2: right
 
-        // Use the continuously updated target block positions stored in the player
         if (!this.targetedHitPos || !this.targetedPlacePos) {
             return; // No block currently targeted
         }
@@ -301,17 +292,14 @@ export class Player {
 
         // --- Handle Interaction based on Mouse Button ---
         if (button === 0) { // Left Click: Break Block
-            // console.log(`Attempting to break block at ${hitBlockPos.x}, ${hitBlockPos.y}, ${hitBlockPos.z}`);
             this.world.setBlock(hitBlockPos.x, hitBlockPos.y, hitBlockPos.z, BLOCKS[0].id); // Set to Air
 
         } else if (button === 2) { // Right Click: Place Block
-            // console.log(`Attempting to place block at ${placeBlockPos.x}, ${placeBlockPos.y}, ${placeBlockPos.z}`);
             const blockIdToPlace = this.selectedBlockId;
 
             // Check 1: Is target location empty (Air)?
             const currentBlockId = this.world.getBlock(placeBlockPos.x, placeBlockPos.y, placeBlockPos.z);
             if (currentBlockId !== BLOCKS[0].id) {
-                // console.log("Placement failed: Target location is not Air.");
                 return;
             }
 
@@ -323,12 +311,10 @@ export class Player {
             const playerBoxWorld = this.boundingBox.clone().translate(this.playerObject.position);
 
             if (playerBoxWorld.intersectsBox(blockBox)) {
-                // console.log("Placement failed: Collision with player.");
-                return;
+                return; // Collision with player
             }
 
             // If checks pass, place the block
-            // console.log(`Placing block ID ${blockIdToPlace} at ${placeBlockPos.x}, ${placeBlockPos.y}, ${placeBlockPos.z}`);
             this.world.setBlock(placeBlockPos.x, placeBlockPos.y, placeBlockPos.z, blockIdToPlace);
         }
         // Middle click (button 1) is ignored

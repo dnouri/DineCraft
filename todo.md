@@ -156,7 +156,7 @@ This document outlines the steps to refactor and enhance the voxel sandbox proje
 
 ---
 
-## Milestone 5: Collision Detection & Resolution Testing & Refinement
+## Milestone 5: Collision Detection & Resolution Testing & Refinement [NEXT]
 
 **Goal:** Ensure player physics interactions with the world geometry are robust and correct.
 

@@ -7,7 +7,7 @@ import { Controls } from './src/Controls.js';
 // --- Core Components ---
 const clock = new THREE.Clock();
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87CEEB); // Sky blue
+scene.background = new THREE.Color(0x87CEEB);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const canvas = document.getElementById('game-canvas');
@@ -24,14 +24,14 @@ scene.add(directionalLight);
 // --- Highlight Mesh ---
 const highlightGeometry = new THREE.BoxGeometry(1.01, 1.01, 1.01);
 const highlightMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffff00, // Yellow
+    color: 0xffff00,
     transparent: true,
     opacity: 0.3,
-    depthWrite: false // See through
+    depthWrite: false // Allows seeing blocks through the highlight
 });
 const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMaterial);
 highlightMesh.visible = false;
-highlightMesh.renderOrder = 1; // Render after solid geometry
+highlightMesh.renderOrder = 1; // Render after solid chunk geometry
 scene.add(highlightMesh);
 
 // --- Game Components ---
@@ -54,24 +54,13 @@ async function initializeGame() {
         const initialChunkTop = world.getOrCreateChunk(0, 0, 0); // Explicitly create at Y=0
         const initialChunkBottom = world.getOrCreateChunk(0, -1, 0); // Create chunk below at Y=-1
 
-        // Meshes are added later by updateDirtyChunkMeshes, no need to add here
-        // if (initialChunkTop.mesh) {
-        //      scene.add(initialChunkTop.mesh);
-        //      console.log("Initial chunk mesh added to scene.");
-        // } else {
-        //      console.warn("Initial chunk generated but mesh is null.");
-        // }
-        // We rely on the updateDirtyChunkMeshes loop to add meshes now.
-        // REMOVED Dangling else block
-
+        // Meshes for newly created chunks are added by world.updateDirtyChunkMeshes later in the game loop.
 
         // Create Player and Controls AFTER world is ready
-        // Pass necessary dependencies (world, highlightMesh)
         player = new Player(camera, scene, world, highlightMesh);
-        controls = new Controls(player, world, renderer.domElement); // Pass world here too
+        controls = new Controls(player, world, renderer.domElement);
 
-        // Start the game loop
-        animate();
+        animate(); // Start the game loop
 
     } catch (error) {
         console.error("Failed to initialize game:", error);
@@ -85,16 +74,12 @@ function animate() {
 
     const deltaTime = clock.getDelta();
 
-    // Update game state (if components are initialized)
+    // Update game state (only if components are initialized)
     if (player && world && controls) {
-        // Player update requires delta time and controls state
-        player.update(deltaTime, controls);
-        // Player target block update requires world
-        player.updateTargetBlock(); // World is now internal to player
-        // World updates dirty chunk meshes, needs scene access to add new meshes
-        world.updateDirtyChunkMeshes(scene);
-        // Controls update (if needed in the future)
-        // controls.update(deltaTime);
+        player.update(deltaTime, controls); // Handles physics, collisions, input response
+        player.updateTargetBlock();         // Handles raycasting for interaction
+        world.updateDirtyChunkMeshes(scene); // Updates chunk geometry and adds new meshes
+        // controls.update(deltaTime); // Potential future use
     }
 
     renderer.render(scene, camera);
@@ -109,5 +94,5 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// --- Start ---
+// --- Start Game ---
 initializeGame();

@@ -5,9 +5,9 @@ import { BLOCKS, getBlockById, getBlockTextureUV, generateFaceUVs } from './Bloc
 export const CHUNK_WIDTH = 16;
 export const CHUNK_HEIGHT = 256;
 export const CHUNK_DEPTH = 16;
-const CHUNK_VOLUME = CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_DEPTH; // Although not directly used in generate, kept for context
+// const CHUNK_VOLUME = CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_DEPTH;
 
-// Geometry constants (copied from Chunk.js)
+// Geometry constants
 // Vertices ordered consistently for UV mapping (bl, br, tl, tr) relative to face direction
 const CUBE_FACE_VERTICES = [
     // pos x (East) [+x]
@@ -78,7 +78,6 @@ export class ChunkMesher {
         const indices = [];
         let vertexIndex = 0; // Tracks the current vertex index for the indices array
 
-        // Use the provided getBlockFn directly for neighbor checks
         const getBlock = getBlockFn;
 
         for (let y = 0; y < CHUNK_HEIGHT; y++) {
@@ -93,12 +92,10 @@ export class ChunkMesher {
                         continue; // Skip air blocks and other non-solid blocks
                     }
 
-                    // World coordinates of the current block (use chunkPosition parameter)
                     const worldX = chunkPosition.x + x;
                     const worldY = chunkPosition.y + y;
                     const worldZ = chunkPosition.z + z;
 
-                    // Check neighbors in all 6 directions using the provided getBlock function
                     const neighbors = [
                         getBlock(worldX + 1, worldY, worldZ), // East (+x)
                         getBlock(worldX - 1, worldY, worldZ), // West (-x)
@@ -133,11 +130,9 @@ export class ChunkMesher {
                                 // Add position vertex (relative to chunk origin, centered at x+0.5, y+0.5, z+0.5)
                                 positions.push(faceVertices[vOffset + 0] + x + 0.5, faceVertices[vOffset + 1] + y + 0.5, faceVertices[vOffset + 2] + z + 0.5);
 
-                                // Add normal (same normal for all 4 vertices of a face)
                                 const normal = CUBE_FACE_NORMALS[faceIndex];
                                 normals.push(normal[0], normal[1], normal[2]);
 
-                                // Add UV coordinate
                                 uvs.push(faceUVs[uvOffset], faceUVs[uvOffset + 1]);
                             }
 
@@ -150,10 +145,10 @@ export class ChunkMesher {
                                 faceIndices = INDICES_CCW;
                             }
 
-                            for (let i = 0; i < faceIndices.length; i++) { // 6 indices per face (2 triangles)
+                            for (let i = 0; i < faceIndices.length; i++) {
                                 indices.push(vertexIndex + faceIndices[i]);
                             }
-                            vertexIndex += 4; // Increment base index for the next face (since we added 4 vertices)
+                            vertexIndex += 4; // Increment base index for the next face
                         }
                     }
                 }

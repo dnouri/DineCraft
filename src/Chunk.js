@@ -32,11 +32,8 @@ export class Chunk {
         // Block data stored in a flat Uint8Array for memory efficiency
         // Y-major order: y * (CHUNK_WIDTH * CHUNK_DEPTH) + z * CHUNK_WIDTH + x
         this.blocks = new Uint8Array(CHUNK_VOLUME);
-        // this.needsMeshUpdate = false; // Replaced by World's dirtyChunks set
 
-        // REMOVED: this.generateTerrain(); - World now handles generation before marking dirty
         // Mesh update is now triggered by World adding the chunk to dirtyChunks
-        // this.updateMesh(); // Don't call directly here anymore
     }
 
     /**
@@ -74,7 +71,7 @@ export class Chunk {
         if (!this.mesh) {
             // Create mesh if it doesn't exist
             this.mesh = new THREE.Mesh(this.geometry, this.material);
-            this.mesh.position.copy(this.position); // Set mesh position to chunk origin
+            this.mesh.position.copy(this.position);
             this.mesh.name = `Chunk_${this.position.x}_${this.position.y}_${this.position.z}`;
         } else {
             // Update existing mesh's geometry
@@ -117,7 +114,6 @@ export class Chunk {
             if (oldBlockId !== blockId) {
                 this.blocks[index] = blockId;
                 // Marking dirty is now handled solely in World.setBlock
-                // this.needsMeshUpdate = true;
                 return true; // Block data was changed
             }
         }
