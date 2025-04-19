@@ -1,11 +1,16 @@
 import * as THREE from 'three';
 
+// Resolve the asset URL relative to the current JS file.
+// This tells Vite to include the image in the build and provide the correct final path.
+const atlasURL = new URL('../assets/atlas.png', import.meta.url).href;
+
 /**
  * Manages loading and providing access to the game's texture atlas.
  * For Milestone 1, this loads a single placeholder texture and creates one material.
  */
 export class TextureAtlas {
-    constructor(textureUrl = 'assets/atlas.png') {
+    // Use the resolved atlasURL as the default
+    constructor(textureUrl = atlasURL) {
         this.textureUrl = textureUrl;
         this.texture = null;
         this.material = null;
