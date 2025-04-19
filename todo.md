@@ -110,6 +110,52 @@ This document outlines the steps to refactor and enhance the voxel sandbox proje
 
 ---
 
+## Milestone 4.5: Jumping and Debug Flying
+
+**Goal:** Implement player jumping and a toggleable debug flying mode.
+
+-   [x] **Input Handling (`Controls.js`):**
+    *   [x] Add event listeners for `Space` keydown/keyup to track jump intention (e.g., set `this.jumpKeyPressed = true/false`).
+    *   [x] Add event listener for `ShiftLeft` or `ShiftRight` keydown/keyup (for flying down).
+    *   [x] Add event listener for `KeyF` keydown to trigger a fly toggle action (e.g., set `this.toggleFlyRequested = true`).
+    *   [x] Add state variables to `Controls` class: `jumpKeyPressed` (boolean), `flyDownKeyPressed` (boolean), `toggleFlyRequested` (boolean). Update these in the listeners.
+-   [x] **Player State (`Player.js`):**
+    *   [x] Define and add constants: `JUMP_VELOCITY` (e.g., `8.0`), `FLY_SPEED` (e.g., `10.0`).
+    *   [x] Add state variable: `isFlying` (boolean, default `false`).
+-   [x] **Flying Toggle Logic (`Player.js`):**
+    *   [x] In `Player.update`, check `controls.toggleFlyRequested`.
+    *   [x] If true, flip `this.isFlying`. If transitioning *to* flying, potentially zero out vertical velocity (`this.velocity.y = 0;`). Reset `controls.toggleFlyRequested = false`.
+-   [x] **Refactor `Player.update` for States:**
+    *   [x] Add a main conditional structure: `if (this.isFlying) { ... } else { ... }`.
+    *   [x] Move existing gravity application (`velocity.y -= GRAVITY * deltaTime;`) into the `else` block (non-flying state).
+-   [x] **Jumping Logic (`Player.js` - within the `else` block):**
+    *   [x] Check `controls.jumpKeyPressed` *and* `this.onGround`.
+    *   [x] If both are true, set `this.velocity.y = JUMP_VELOCITY`. (Note: `jumpKeyPressed` doesn't need resetting if it reflects the current key state).
+-   [x] **Flying Movement Logic (`Player.js` - within the `if (this.isFlying)` block):**
+    *   [x] Calculate horizontal `inputVelocity` based on controls (forward/back/left/right) and camera yaw, similar to walking. Scale by `FLY_SPEED`. Set `this.velocity.x` and `this.velocity.z`.
+    *   [x] Handle vertical movement:
+        *   Set `this.velocity.y = 0;` initially for the frame.
+        *   If `controls.jumpKeyPressed` (Space), set `this.velocity.y = FLY_SPEED`.
+        *   If `controls.flyDownKeyPressed` (Shift), set `this.velocity.y = -FLY_SPEED`.
+    *   [x] Keep the existing delta position calculation, collision checks (X, Y, Z), and position updates. The modified velocity and lack of gravity will dictate flight behavior.
+-   [x] **Testing (`Player.test.js`):**
+    *   [x] Write test: Player jumps only when `onGround` is true and space is pressed.
+    *   [x] Write test: Player's Y velocity becomes `JUMP_VELOCITY` upon jumping.
+    *   [x] Write test: Player eventually lands (`onGround` becomes true) after jumping on flat ground.
+    *   [x] Write test: Player's upward movement stops if they hit a ceiling block during a jump.
+    *   [x] Write test: Pressing 'F' toggles the `isFlying` state.
+    *   [x] Write test: Gravity is not applied when `isFlying` is true.
+    *   [x] Write test: Player moves up when Space is pressed while flying.
+    *   [x] Write test: Player moves down when Shift is pressed while flying.
+    *   [x] Write test: Player stops moving vertically if flying into a floor/ceiling.
+    *   [x] Write test: Player maintains horizontal movement based on input while flying.
+-   [ ] **Verification:**
+    *   [x] Run tests: `npm test`. Ensure all tests pass.
+    *   [x] Run game: Visually confirm jumping works as expected. Tune `JUMP_VELOCITY`.
+    *   [x] Run game: Toggle flying with 'F'. Confirm gravity is off. Confirm vertical movement with Space/Shift. Confirm horizontal movement works. Confirm collision with blocks occurs. Tune `FLY_SPEED`.
+
+---
+
 ## Milestone 5: Collision Detection & Resolution Testing & Refinement
 
 **Goal:** Ensure player physics interactions with the world geometry are robust and correct.

@@ -7,10 +7,11 @@ const PLAYER_HEIGHT = 1.8;
 const PLAYER_WIDTH = 0.6;
 const PLAYER_DEPTH = 0.6;
 const PLAYER_EYE_HEIGHT = 1.6; // Relative to player base (feet)
-const PLAYER_SPEED = 5.0; // Units per second
+const PLAYER_SPEED = 5.0; // Units per second (walking/horizontal flying)
 const GRAVITY = 20.0; // Units per second squared
 const RESPAWN_Y_LEVEL = -50; // Y level below which the player respawns
-// const JUMP_VELOCITY = 8.0; // Implement later if desired
+const JUMP_VELOCITY = 8.0; // Vertical velocity impulse on jump
+const FLY_SPEED = 10.0; // Speed for vertical flight movement
 
 export class Player {
     /**
@@ -27,6 +28,7 @@ export class Player {
 
         this.velocity = new THREE.Vector3();
         this.onGround = false;
+        this.isFlying = false; // Player state for flying mode
 
         // Player's physical representation (invisible anchor)
         this.playerObject = new THREE.Object3D();
@@ -61,38 +63,83 @@ export class Player {
      * @param {Controls} controls The controls object for input state.
      */
     update(deltaTime, controls) {
-        // 1. Apply Gravity
-        this.velocity.y -= GRAVITY * deltaTime;
-
-        // 2. Calculate Horizontal Input Velocity
-        const speed = PLAYER_SPEED;
-        const inputVelocity = new THREE.Vector3(); // Renamed from moveVelocity
-
-        if (controls.moveForward) inputVelocity.z -= 1; // Use direction vectors
-        if (controls.moveBackward) inputVelocity.z += 1;
-        if (controls.moveLeft) inputVelocity.x -= 1;
-        if (controls.moveRight) inputVelocity.x += 1;
-
-        // Normalize if moving diagonally, then scale by speed
-        if (inputVelocity.lengthSq() > 0) {
-            inputVelocity.normalize().multiplyScalar(speed);
+        // --- Handle Flying Toggle ---
+        if (controls.toggleFlyRequested) {
+            this.isFlying = !this.isFlying;
+            console.log(`Flying mode: ${this.isFlying ? 'ON' : 'OFF'}`);
+            if (this.isFlying) {
+                this.velocity.y = 0; // Zero out vertical velocity when starting to fly
+            }
+            controls.toggleFlyRequested = false; // Reset the one-shot flag
         }
 
-        // Apply camera rotation (yaw) to the input velocity
-        inputVelocity.applyQuaternion(this.camera.quaternion);
+        // --- Calculate Velocity based on State (Flying or Walking/Jumping) ---
+        const inputVelocity = new THREE.Vector3(); // Horizontal input direction
 
-        // Set horizontal velocity based on input
-        this.velocity.x = inputVelocity.x;
-        this.velocity.z = inputVelocity.z;
+        if (this.isFlying) {
+            // --- Flying Logic ---
+            // No gravity applied
 
-        // 3. Calculate Potential Position Change
+            // Calculate Horizontal Input Velocity (uses PLAYER_SPEED)
+            const speed = PLAYER_SPEED; // Use PLAYER_SPEED for horizontal flight too
+            if (controls.moveForward) inputVelocity.z -= 1;
+            if (controls.moveBackward) inputVelocity.z += 1;
+            if (controls.moveLeft) inputVelocity.x -= 1;
+            if (controls.moveRight) inputVelocity.x += 1;
+
+            if (inputVelocity.lengthSq() > 0) {
+                inputVelocity.normalize().multiplyScalar(speed);
+            }
+            inputVelocity.applyQuaternion(this.camera.quaternion); // Apply camera yaw
+
+            this.velocity.x = inputVelocity.x;
+            this.velocity.z = inputVelocity.z;
+
+            // Calculate Vertical Velocity (uses FLY_SPEED)
+            this.velocity.y = 0; // Start with no vertical movement
+            if (controls.jumpKeyPressed) { // Space for up
+                this.velocity.y = FLY_SPEED;
+            } else if (controls.flyDownKeyPressed) { // Shift for down
+                this.velocity.y = -FLY_SPEED;
+            }
+
+        } else {
+            // --- Walking/Jumping Logic ---
+            // 1. Apply Gravity
+            this.velocity.y -= GRAVITY * deltaTime;
+
+            // 2. Calculate Horizontal Input Velocity (uses PLAYER_SPEED)
+            const speed = PLAYER_SPEED;
+            if (controls.moveForward) inputVelocity.z -= 1;
+            if (controls.moveBackward) inputVelocity.z += 1;
+            if (controls.moveLeft) inputVelocity.x -= 1;
+            if (controls.moveRight) inputVelocity.x += 1;
+
+            if (inputVelocity.lengthSq() > 0) {
+                inputVelocity.normalize().multiplyScalar(speed);
+            }
+            inputVelocity.applyQuaternion(this.camera.quaternion); // Apply camera yaw
+
+            this.velocity.x = inputVelocity.x;
+            this.velocity.z = inputVelocity.z;
+
+            // 3. Handle Jumping
+            if (controls.jumpKeyPressed && this.onGround) {
+                this.velocity.y = JUMP_VELOCITY; // Apply jump impulse
+                this.onGround = false; // Player is no longer on the ground - SET HERE
+            }
+        }
+
+        // --- Common Logic: Collision Detection & Position Update ---
+        // Calculate Potential Position Change
         const deltaPosition = this.velocity.clone().multiplyScalar(deltaTime);
-        const potentialPosition = this.playerObject.position.clone().add(deltaPosition);
 
-        // 4. Collision Detection & Resolution (Simplified Approach)
-        this.onGround = false;
+        // Collision Detection & Resolution (Simplified Approach)
+        // NOTE: onGround is now ONLY set true during Y collision resolution (landing)
+        // and ONLY set false when initiating a jump.
         const currentPos = this.playerObject.position;
         const playerBox = this.boundingBox.clone(); // Local bounding box
+        const potentialPosition = currentPos.clone().add(deltaPosition); // Calculate potential position *before* checks
 
         // --- Check Y Collision ---
         const potentialPosY = potentialPosition.y;

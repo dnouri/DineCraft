@@ -23,7 +23,10 @@ export class Controls {
         this.moveBackward = false;
         this.moveLeft = false;
         this.moveRight = false;
-        // this.jump = false; // For later jump implementation
+        // New state flags for jumping and flying
+        this.jumpKeyPressed = false; // Tracks if Space is currently held down
+        this.flyDownKeyPressed = false; // Tracks if Shift is currently held down
+        this.toggleFlyRequested = false; // One-shot flag to signal fly mode toggle
 
         this.initEventListeners();
     }
@@ -49,7 +52,7 @@ export class Controls {
             console.log('Pointer unlocked');
             // You could show menus here
             // Reset movement keys on unlock to prevent unwanted movement
-            this.resetMovementKeys();
+            this.resetInputKeys(); // Renamed for clarity
         });
     }
 
@@ -73,9 +76,17 @@ export class Controls {
             case 'ArrowRight':
                 this.moveRight = true;
                 break;
-            // case 'Space':
-            //     this.jump = true; // For later jump implementation
-            //     break;
+            case 'Space':
+                this.jumpKeyPressed = true; // Set jump flag
+                break;
+            case 'ShiftLeft':
+            case 'ShiftRight':
+                this.flyDownKeyPressed = true; // Set fly down flag
+                break;
+            case 'KeyF': // Added KeyF handler
+                // Set the request flag. Player update loop will handle the toggle.
+                this.toggleFlyRequested = true;
+                break;
 
             // Hotbar Keys
             case 'Digit1':
@@ -116,19 +127,26 @@ export class Controls {
             case 'ArrowRight':
                 this.moveRight = false;
                 break;
-            // case 'Space':
-            //     this.jump = false; // For later jump implementation
-            //     break;
+            case 'Space':
+                this.jumpKeyPressed = false; // Reset jump flag
+                break;
+            case 'ShiftLeft':
+            case 'ShiftRight':
+                this.flyDownKeyPressed = false; // Reset fly down flag
+                break;
+            // No need to handle KeyF up, toggleFlyRequested is reset by Player
         }
     }
 
-    /** Resets movement flags, typically called when pointer lock is lost. */
-    resetMovementKeys() {
+    /** Resets input flags, typically called when pointer lock is lost. */
+    resetInputKeys() { // Renamed for clarity
         this.moveForward = false;
         this.moveBackward = false;
         this.moveLeft = false;
         this.moveRight = false;
-        // this.jump = false;
+        this.jumpKeyPressed = false; // Reset jump state
+        this.flyDownKeyPressed = false; // Reset fly down state
+        // toggleFlyRequested is a one-shot trigger, no need to reset here
     }
 
     /** Handles mouse button presses for interaction. */
