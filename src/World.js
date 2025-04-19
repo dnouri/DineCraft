@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Chunk, CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH } from './Chunk.js';
 import { BLOCKS } from './BlockRegistry.js';
+import { TerrainGenerator } from './TerrainGenerator.js'; // Import the generator
 
 /**
  * Manages all the chunks in the world and provides methods
@@ -9,11 +10,14 @@ import { BLOCKS } from './BlockRegistry.js';
 export class World {
     /**
      * @param {THREE.Material} chunkMaterial The material to use for chunk meshes.
+     * @param {number} [seed=Date.now()] Optional seed for terrain generation. Defaults to current time.
      */
-    constructor(chunkMaterial) {
+    constructor(chunkMaterial, seed = Date.now()) { // Add optional seed parameter
         this.chunkMaterial = chunkMaterial;
         this.chunks = new Map(); // Key: "x,y,z", Value: Chunk instance
         this.dirtyChunks = new Set(); // Set of Chunk instances needing mesh updates
+        // Instantiate the terrain generator with the provided or default seed
+        this.terrainGenerator = new TerrainGenerator(seed);
     }
 
     /**
@@ -36,9 +40,28 @@ export class World {
             // Pass world reference for neighbor lookups during mesh generation
             chunk = new Chunk(chunkPosition, this.chunkMaterial, this);
             this.chunks.set(key, chunk);
+
+            // Generate terrain using the TerrainGenerator
+            // Directly populate the chunk's block data
+            for (let x = 0; x < CHUNK_WIDTH; x++) {
+                for (let z = 0; z < CHUNK_DEPTH; z++) {
+                    for (let y = 0; y < CHUNK_HEIGHT; y++) {
+                        const worldX = chunkPosition.x + x;
+                        const worldY = chunkPosition.y + y;
+                        const worldZ = chunkPosition.z + z;
+                        const blockId = this.terrainGenerator.getBlockId(worldX, worldY, worldZ);
+                        // Use the chunk's internal method to get the index (assuming it's accessible or made public)
+                        // If _getIndex is strictly private, Chunk needs a public method or World needs the formula.
+                        // Let's assume Chunk._getIndex is usable here for now.
+                        const index = chunk._getIndex(x, y, z);
+                        chunk.blocks[index] = blockId;
+                    }
+                }
+            }
+
             // Mark the new chunk as dirty so its mesh gets built and added
             this.dirtyChunks.add(chunk);
-            console.log(`Created chunk at ${key}`);
+            console.log(`Created chunk at ${key} using TerrainGenerator`);
         }
         return chunk;
     }

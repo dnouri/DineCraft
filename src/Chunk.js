@@ -34,37 +34,14 @@ export class Chunk {
         this.blocks = new Uint8Array(CHUNK_VOLUME);
         // this.needsMeshUpdate = false; // Replaced by World's dirtyChunks set
 
-        this.generateTerrain();
+        // REMOVED: this.generateTerrain(); - World now handles generation before marking dirty
         // Mesh update is now triggered by World adding the chunk to dirtyChunks
         // this.updateMesh(); // Don't call directly here anymore
     }
 
     /**
      * Populates the chunk's block data with simple flat terrain.
-     * Y=0: Grass, Y=-1,-2: Dirt, Y<-2: Stone
-     */
-    generateTerrain() {
-        for (let x = 0; x < CHUNK_WIDTH; x++) {
-            for (let z = 0; z < CHUNK_DEPTH; z++) {
-                for (let y = 0; y < CHUNK_HEIGHT; y++) {
-                    const worldY = this.position.y + y; // Calculate world Y coordinate
-                    let blockId = BLOCKS[0].id; // Default to Air
-
-                    if (worldY === 0) {
-                        blockId = BLOCKS[1].id; // Grass
-                    } else if (worldY === -1 || worldY === -2) {
-                        blockId = BLOCKS[2].id; // Dirt
-                    } else if (worldY < -2) {
-                        blockId = BLOCKS[3].id; // Stone
-                    }
-                    // Directly set block data without triggering mesh update during initial generation
-                    const index = this._getIndex(x, y, z);
-                    this.blocks[index] = blockId;
-                }
-            }
-        }
-        // No need to set needsMeshUpdate here, World handles it via dirtyChunks
-    }
+    // REMOVED: generateTerrain() method. Logic is now in World using TerrainGenerator.
 
     // Note: generateGeometryData method has been removed and its logic moved to ChunkMesher.js
 
