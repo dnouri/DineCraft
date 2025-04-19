@@ -10,9 +10,17 @@ export class TerrainGenerator {
      */
     constructor(seed) {
         this.noise = new Noise(seed);
-        // Define generation parameters (can be tuned later)
-        this.scale = 50; // Controls the feature size (larger scale = larger features)
-        this.threshold = 0.0; // Density threshold for solid vs. air
+        // Define generation parameters
+
+        // 3D Noise parameters (currently used)
+        this.scale = 50; // Controls the feature size for 3D noise
+        this.threshold = 0.0; // Density threshold for 3D noise solid vs. air
+
+        // 2D Heightmap parameters (to be implemented)
+        this.surfaceScale = 100; // Controls the scale of hills/valleys
+        this.baseLevel = 0;      // Average surface height around Y=0
+        this.amplitude = 15;     // Max deviation from baseLevel (+/-)
+        this.dirtDepth = 3;      // How many blocks of dirt below grass
     }
 
     /**
@@ -20,21 +28,32 @@ export class TerrainGenerator {
      * @param {number} worldX World X coordinate.
      * @param {number} worldY World Y coordinate.
      * @param {number} worldZ World Z coordinate.
-     * @returns {number} The block ID (e.g., Stone or Air).
+     * @returns {number} The block ID (Air, Grass, Dirt, or Stone).
      */
     getBlockId(worldX, worldY, worldZ) {
-        // Calculate noise value at scaled coordinates
-        const noiseValue = this.noise.simplex3(
-            worldX / this.scale,
-            worldY / this.scale,
-            worldZ / this.scale
-        );
+        // 1. Calculate surface height using 2D noise based on X and Z
+        const surfaceNoiseValue = this.noise.simplex2(
+            worldX / this.surfaceScale,
+            worldZ / this.surfaceScale
+        ); // Output is typically between -1 and 1
 
-        // Determine block type based on threshold
-        if (noiseValue > this.threshold) {
-            return BLOCKS[3].id; // Stone
-        } else {
+        // Map noise value to world height range
+        // Example: baseLevel=0, amplitude=15 -> range is -15 to +15
+        const surfaceY = Math.floor(this.baseLevel + surfaceNoiseValue * this.amplitude);
+
+        // 2. Determine block type based on worldY relative to surfaceY
+        if (worldY > surfaceY) {
+            // Above the surface
             return BLOCKS[0].id; // Air
+        } else if (worldY === surfaceY) {
+            // Exactly at the surface
+            return BLOCKS[1].id; // Grass
+        } else if (worldY >= surfaceY - this.dirtDepth) {
+            // Just below the surface, within dirt depth
+            return BLOCKS[2].id; // Dirt
+        } else {
+            // Deep below the surface
+            return BLOCKS[3].id; // Stone
         }
     }
 }

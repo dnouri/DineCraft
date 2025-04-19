@@ -86,23 +86,23 @@ This document outlines the steps to refactor and enhance the voxel sandbox proje
 
 **Goal:** Replace flat terrain with simple, dynamic 3D terrain using noise.
 
--   [ ] **Add Noise Library:**
+-   [x] **Add Noise Library:**
     *   Install a noise library: `npm install noisejs`
     *   Import it where needed (likely `World.js` or a new `TerrainGenerator.js`).
--   [ ] **Implement Terrain Generation Logic:**
+-   [x] **Implement Terrain Generation Logic:**
     *   Create a `TerrainGenerator` class or add methods to `World.js`.
     *   Use `noise.simplex3` or `noise.perlin3` function, taking world coordinates (x, y, z) as input.
     *   Define logic based on noise value:
         *   e.g., If `noise(x/scale, y/scale, z/scale) > threshold`, place Stone.
         *   e.g., Add layers: If `y` is near a surface level determined by `noise(x/scale, z/scale)`, place Grass/Dirt, otherwise Air above, Stone below.
--   [ ] **Integrate Generator:**
+-   [x] **Integrate Generator:**
     *   Modify `Chunk.generateTerrain` (or remove it if generation moves to `World`).
     *   When a chunk is created (`World.getOrCreateChunk`), iterate through its local coordinates, calculate world coordinates, call the terrain generator function for each block, and set the block ID in the `Chunk.blocks` array.
--   [ ] **(Optional) Write Basic Terrain Tests:**
+-   [x] **(Optional) Write Basic Terrain Tests:**
     *   If using a fixed seed for the noise generator during testing, assert the expected block type at a few specific world coordinates.
--   [ ] **Run Tests:** Ensure any new tests pass and existing tests are unaffected.
+-   [x] **Run Tests:** Ensure any new tests pass and existing tests are unaffected.
     *   Run: `npm test`
--   [ ] **Verify Game:**
+-   [x] **Verify Game:**
     *   Run the game. Observe the generated terrain. It should no longer be flat.
     *   Fly around. Ensure terrain generates across multiple chunks horizontally and vertically.
     *   Check that block placement/breaking still works correctly on the generated terrain.
